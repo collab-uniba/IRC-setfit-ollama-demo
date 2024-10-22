@@ -4,7 +4,6 @@ import yaml
 import os
 
 OLLAMA_HOST = os.getenv('OLLAMA_HOST', 'http://localhost:11434')
-ollama.set_host(OLLAMA_HOST)
 
 def pull_ollama_model(base_model):
     ollama.pull(base_model)
