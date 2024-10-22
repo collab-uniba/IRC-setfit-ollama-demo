@@ -1,0 +1,102 @@
+# Python specific #
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.env
+*.venv
+ENV/
+env/
+venv/
+env.bak/
+venv.bak/
+
+# Virtual environments #
+pip-log.txt
+pip-delete-this-directory.txt
+
+# VSCode specific #
+.vscode/
+.vscode/settings.json
+.vscode/launch.json
+.vscode/tasks.json
+
+# Byte-compiled / optimized / DLL files #
+*.pyc
+*.pyo
+*.pyd
+*.so
+*.dll
+
+# Distribution / packaging #
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Jupyter Notebook #
+.ipynb_checkpoints
+
+# Pytest cache #
+.pytest_cache/
+
+# Coverage reports #
+htmlcov/
+.tox/
+.nox/
+.coverage
+*.cover
+*.py,cover
+.cache
+
+# Scrapy logs #
+.scrapy/
+
+# MySQL config #
+*.ini
+
+# Temporary files #
+*.log
+*.tmp
+*.out
+
+# Data files #
+data/scraped_issues/*
+data/processed/*
+
+# Model files #
+models/*.pth
+models/*.pt
+models/.setfit_model/
+
+# Environment variables #
+.env
+
+# MacOS-specific #
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Thumbnails and backups #
+._*
+.Spotlight-V100
+.Trashes
+*.swp
+*~
+
+# Editor backups #
+*~.nib
+*.bak
+*.orig
+*.swp

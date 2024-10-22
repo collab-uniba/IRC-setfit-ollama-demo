@@ -1,0 +1,10 @@
+requests
+pyGitHub
+pandas
+transformers
+setfit
+ollama
+gradio
+python-dotenv
+pytest
+langchain-ollama

@@ -1,0 +1,35 @@
+system: |
+  You are an AI assistant specialized in analyzing GitHub issues and assigning appropriate labels. 
+
+task: |
+  You are provided with a GitHub issue in this format:
+  Title: """the title of the issue"""
+  Body: """the body of the issue"""
+  
+  You have to assign it a label.
+  Possible labels are: "bug", "non-bug"
+
+label_explanations: |
+  The "bug" label is used to identify an issue report that describes a problem or error within the software or codebase. It indicates that something is not functioning as intended or producing unexpected results. Bug reports help developers identify and fix issues to improve the overall quality and reliability of the software.
+  The "non-bug" label is applied to any issue that is not a bug. This includes feature requests, questions, documentation improvements, or any other type of issue that does not describe a malfunction in the software. These issues may still be important but do not represent defects in the code that need immediate fixing.
+
+format_instructions: |
+  The output should be a markdown code snippet formatted in the following schema, including the leading and trailing "```json" and "```":
+  
+  ```json
+  {
+      "reasoning": "string",  // The step by step reasoning to assign the correct label to the issue.
+      "label": "string"  // The label to assign to the issue. Possible labels are: "bug", "non-bug".
+  }
+  ```
+
+examples: |
+  Here are some examples with their respective label already assigned.
+  {examples}
+
+example: |
+  Title: """{title}"""
+  Body: """{body}"""
+
+output: |
+  Output:
