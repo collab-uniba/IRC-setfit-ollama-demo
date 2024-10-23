@@ -20,11 +20,11 @@ setfit_models:
 ollama_models:
   - name: "LLaMA 3.1"
     path: "llama3.1"
-    default: true
+    default: false
     
   - name: "LLaMA 3.2"
     path: "llama3.2"
-    default: false
+    default: true
     
   - name: "Mistral"
     path: "mistral"
