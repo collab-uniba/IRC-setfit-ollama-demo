@@ -1,6 +1,7 @@
 # define the scrape_github_issues function
 from typing import List
 from github import Github
+from loguru import logger
 
 # Define an issue object
 class Issue:
@@ -23,7 +24,7 @@ def validate_github_url(url: str) -> bool:
     """
     g = Github()
     try:
-        if "issues" in url:
+        if "issues" in url and url.split("/")[-1].isdigit():
             issue = g.get_repo(url).get_issue(int(url.split("/")[-1]))
         else:
             org_name = url.split("/")[3]
@@ -48,7 +49,8 @@ def scrape_github_issues(url: str, num_issues: int = 5, state: str = 'all') -> L
     repo_name = url.split("/")[4]
     
     # Check if the URL is an issue URL
-    if "issues" in url:
+    if "issues" in url and url.split("/")[-1].isdigit():
+        logger.info(f"Scraping issue from {url}")
         issue_number = int(url.split("/")[-1])
 
         repo = g.get_repo(f"{org_name}/{repo_name}")
