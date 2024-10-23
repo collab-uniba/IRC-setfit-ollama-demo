@@ -47,7 +47,7 @@ def get_label(text):
 
 def postprocess_response(issue_response):
     i, r = issue_response
-    i.classification = get_label(r['message']['content'])
+    i.classification = r['message']['content']
     return i
 
 
