@@ -1,0 +1,11 @@
+FROM ollama/ollama:latest
+
+# Copy initialization script
+COPY models/init_ollama.sh /init_ollama.sh
+COPY models/models_config.yaml /models_config.yaml
+
+# Make sure the script is executable
+RUN chmod +x /init_ollama.sh && /init_ollama.sh
+
+# Set the entrypoint to run the init script and then serve
+CMD ["ollama", "serve"]

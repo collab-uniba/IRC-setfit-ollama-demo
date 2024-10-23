@@ -1,0 +1,47 @@
+# SetFit Models Configuration
+setfit_models:
+  - name: "CFS Binary"
+    path: "Collab-uniba/cfs-binary-setfit"
+    default: false
+  
+  - name: "FPrime Binary"
+    path: "Collab-uniba/fprime-binary-setfit"
+    default: true
+    
+  - name: "NLBSE Multi-Class"
+    path: "Collab-uniba/nlbse-multi-class-setfit"
+    default: false
+    
+  - name: "NLBSE Binary"
+    path: "Collab-uniba/nlbse-binary-setfit"
+    default: false
+
+# Ollama Models Configuration
+ollama_models:
+  - name: "LLaMA 3.1"
+    path: "llama3.1"
+    default: true
+    
+  - name: "LLaMA 3.2"
+    path: "llama3.2"
+    default: false
+    
+  - name: "Mistral"
+    path: "mistral"
+    default: false
+    
+  - name: "Gemma 2"
+    path: "gemma2"
+    default: false
+    
+  - name: "Qwen 2.5"
+    path: "qwen2.5"
+    default: false
+    
+  - name: "Phi 3.5"
+    path: "phi3.5"
+    default: false
+    
+  - name: "CodeGemma"
+    path: "codegemma"
+    default: false

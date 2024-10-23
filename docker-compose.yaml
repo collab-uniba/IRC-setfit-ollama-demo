@@ -2,21 +2,24 @@ version: '3.8'
 
 services:
   ollama:
-    image: ollama/ollama:latest
+    build:
+      context: .
+      dockerfile: dockerfile.ollama
     container_name: ollama-service
-    command: serve
     ports:
       - "11434:11434"
     volumes:
       - ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_HOST=0.0.0.0
     restart: unless-stopped
     healthcheck:
       test: |
         curl -f "http://localhost:11434/api/version" > /dev/null 2>&1 && echo 'Ollama is healthy' || echo 'Ollama is not healthy'
-      interval: 10s       # Check every 10 seconds during debugging
-      timeout: 10s        # Allow up to 10 seconds for the check
-      retries: 3         # Try 3 times
-      start_period: 30s   # Wait 30s before starting checks
+      interval: 10s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
   app:
     build: .

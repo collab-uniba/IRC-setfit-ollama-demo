@@ -5,7 +5,10 @@ import re
 from scraping.github_scraper import scrape_github_issues, Issue
 from models.setfit_model import setfit_classify
 from models.llm_model import llm_classify, pull_ollama_model
+from models.model_config import ModelConfigLoader
 from loguru import logger
+
+model_loader = ModelConfigLoader()
 
 def validate_github_url(url: str) -> Tuple[bool, str, str]:
     """Validates GitHub URL and determines if it's an issue or project URL"""
@@ -101,13 +104,8 @@ def update_model_choices(model_choice: str):
         return [
             gr.update(
                 visible=True,
-                choices=[
-                    "Collab-uniba/cfs-binary-setfit",
-                    "Collab-uniba/fprime-binary-setfit",
-                    "Collab-uniba/nlbse-multi-class-setfit",
-                    "Collab-uniba/nlbse-binary-setfit",
-                ],
-                value="Collab-uniba/fprime-binary-setfit",
+                choices=model_loader.get_model_choices("setfit"),
+                value=model_loader.get_default_model("setfit"),
                 label="Select SetFit Base Model"
             ),
             gr.update(visible=False),
@@ -117,16 +115,8 @@ def update_model_choices(model_choice: str):
         return [
             gr.update(
                 visible=True,
-                choices=[
-                    "llama3.1",
-                    "llama3.2",
-                    "mistral",
-                    "gemma2",
-                    "qwen2.5",
-                    "phi3.5",
-                    "codegemma",
-                ],
-                value="llama3.1",
+                choices=model_loader.get_model_choices("ollama"),
+                value=model_loader.get_default_model("ollama"),
                 label="Select Ollama Base Model"
             ),
             gr.update(visible=True),
@@ -180,14 +170,9 @@ with gr.Blocks() as iface:
             )
             
             base_model_dropdown = gr.Dropdown(
-                choices=[
-                    "Collab-uniba/cfs-binary-setfit",
-                    "Collab-uniba/fprime-binary-setfit",
-                    "Collab-uniba/nlbse-multi-class-setfit",
-                    "Collab-uniba/nlbse-binary-setfit",
-                ],
+                choices=model_loader.get_model_choices("setfit"),
                 label="Select SetFit Base Model",
-                value="Collab-uniba/fprime-binary-setfit",
+                value=model_loader.get_default_model("setfit"),
                 visible=True
             )
             
@@ -245,8 +230,3 @@ if __name__ == "__main__":
         show_error=True,
         quiet=False,  # This ensures the URL is printed
     )   
-
-    logger.info("\n" + "="*50)
-    logger.info("🚀 Gradio app is running!")
-    logger.info("📱 Local URL: http://localhost:7860")
-    logger.info("="*50 + "\n")

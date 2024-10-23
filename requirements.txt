@@ -8,3 +8,5 @@ gradio
 python-dotenv
 pytest
 loguru
+huggingface-hub
+pyYAML
