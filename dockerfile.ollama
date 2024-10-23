@@ -1,5 +1,4 @@
-# Use the Debian Slim image
-FROM debian:12.7-slim
+FROM debian:bookworm-slim
 
 # Install dependencies and CA certificates
 RUN apt-get update && apt-get install -y --no-install-recommends \
