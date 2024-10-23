@@ -8,11 +8,16 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Copy all files
+# Copy only requirements.txt first
+COPY requirements.txt ./
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt 
+
+# Copy the rest of the application code
 COPY . .
 
-# Install Python dependencies and run model pull script
-RUN pip install --no-cache-dir -r requirements.txt 
+# Run model pull script
 RUN chmod +x models/pull_models.py && \
     ./models/pull_models.py
 
