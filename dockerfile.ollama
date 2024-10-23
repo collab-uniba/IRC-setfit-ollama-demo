@@ -1,11 +1,31 @@
-FROM ollama/ollama:latest
+# Use the Debian Slim image
+FROM debian:12.7-slim
 
-# Copy initialization script
+# Install dependencies and CA certificates
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    bash \
+    wget \
+    jq \
+    ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install yq (for processing YAML)
+RUN wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq \
+    && chmod +x /usr/bin/yq
+
+# Download Ollama
+RUN curl -fsSL https://ollama.com/install.sh | sh
+
+# Copy initialization script and model config
 COPY models/init_ollama.sh /init_ollama.sh
 COPY models/models_config.yaml /models_config.yaml
 
-# Make sure the script is executable
-RUN chmod +x /init_ollama.sh && /init_ollama.sh
+# Ensure both files are executable and exist
+RUN chmod +x /init_ollama.sh && ls -l /models_config.yaml
 
-# Set the entrypoint to run the init script and then serve
-CMD ["ollama", "serve"]
+# Add Ollama to PATH
+ENV PATH="/usr/local/bin/ollama:${PATH}"
+
+# Start Ollama and pull models directly
+CMD /bin/bash -c "ollama serve & sleep 5 && /init_ollama.sh && wait"

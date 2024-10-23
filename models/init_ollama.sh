@@ -1,14 +1,5 @@
 #!/bin/bash
 
-# Function to wait for Ollama to be ready
-wait_for_ollama() {
-    echo "Waiting for Ollama service to be ready..."
-    until curl -s "http://localhost:11434/api/version" > /dev/null; do
-        sleep 1
-    done
-    echo "Ollama service is ready"
-}
-
 # Function to pull a model
 pull_model() {
     local model=$1
@@ -16,9 +7,6 @@ pull_model() {
     ollama pull "$model"
     return $?
 }
-
-# Main script
-wait_for_ollama
 
 # Read default model from config
 DEFAULT_MODEL=$(yq e '.ollama_models[] | select(.default == true) | .path' /models_config.yaml)
