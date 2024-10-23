@@ -23,7 +23,7 @@
 1. **Clone the Repository**:
     ```sh
     git clone https://github.com/collab-uniba/IRC-setfit-ollama-demo.git
-    cd irc-ui
+    cd IRC-setfit-ollama-demo
     ```
 
 2. **Build and Run Containers with Docker Compose**:
