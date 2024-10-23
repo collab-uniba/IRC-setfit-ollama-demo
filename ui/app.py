@@ -5,6 +5,7 @@ import re
 from scraping.github_scraper import scrape_github_issues, Issue
 from models.setfit_model import setfit_classify
 from models.llm_model import llm_classify, pull_ollama_model
+from loguru import logger
 
 def validate_github_url(url: str) -> Tuple[bool, str, str]:
     """Validates GitHub URL and determines if it's an issue or project URL"""
@@ -235,5 +236,17 @@ with gr.Blocks() as iface:
         outputs=classified_output
     )
 
-if __name__ == "__main__":
-    iface.launch()
+if __name__ == "__main__":   
+    # Launch with specific parameters to make URL accessible from Docker
+    iface.launch(
+        server_name="0.0.0.0",  # Bind to all network interfaces
+        server_port=7860,
+        share=False,  # Set to True if you want a public URL
+        show_error=True,
+        quiet=False,  # This ensures the URL is printed
+    )   
+
+    logger.info("\n" + "="*50)
+    logger.info("🚀 Gradio app is running!")
+    logger.info("📱 Local URL: http://localhost:7860")
+    logger.info("="*50 + "\n")
