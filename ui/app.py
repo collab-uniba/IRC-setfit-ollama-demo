@@ -51,10 +51,44 @@ def process_url(url: str, num_issues: int, issue_state: str) -> Tuple[str, gr.up
         return output, gr.update(visible=True), result
     elif isinstance(result, Issue):
         output = str(result) + "\n"
-        return output, gr.update(visible=True), result
+        return output, gr.update(visible=True), [result]
     else:
         return "No issues found", gr.update(visible=False), []
 
+def process_manual_issue(title: str, body: str) -> Tuple[str, gr.update, List[Issue]]:
+    """Process manually entered issue"""
+    if not title or not body:
+        return "Please enter both title and body", gr.update(visible=False), []
+    
+    issue = Issue(
+        title=title,
+        body=body,
+        url=None
+    )
+    
+    output = str(issue) + "\n"
+    return output, gr.update(visible=True), [issue]
+
+def update_input_visibility(input_type: str):
+    """Updates visibility of input controls based on selected input type"""
+    if input_type == "Scrape":
+        return [
+            gr.update(visible=True),   # url_row
+            gr.update(visible=False),  # manual_input_row
+            gr.update(visible=False),  # manual_submit
+            gr.update(visible=True),   # url_components
+            gr.update(visible=True),   # url_status
+            gr.update(visible=False),  # project_controls
+        ]
+    else:  # manual
+        return [
+            gr.update(visible=False),  # url_row
+            gr.update(visible=True),   # manual_input_row
+            gr.update(visible=True),   # manual_submit
+            gr.update(visible=False),  # url_components
+            gr.update(visible=False),  # url_status
+            gr.update(visible=False),  # project_controls
+        ]
 def update_scraping_controls(url: str):
     """Updates visibility of scraping controls based on URL type"""
     is_valid, url_type, message = validate_github_url(url)
@@ -133,8 +167,23 @@ def pull_model(base_model: str) -> str:
 with gr.Blocks() as iface:
     gr.Markdown("# GitHub Issue/Project Scraper and Classifier")
     
-    with gr.Row():
+    # Input type selector
+    input_type = gr.Radio(
+        choices=["Scrape", "Manual"],
+        value="Scrape",
+        label="Select Input Type",
+        info="Choose whether to input a GitHub URL or manually enter an issue"
+    )
+    
+    # URL input components
+    with gr.Row(visible=True) as url_row:
         url_input = gr.Textbox(label="Enter GitHub URL")
+    
+    # Manual input components
+    with gr.Row(visible=False) as manual_input_row:
+        with gr.Column():
+            issue_title = gr.Textbox(label="Issue Title")
+            issue_body = gr.Textbox(label="Issue Body", lines=5)
     
     # URL validation message
     url_status = gr.Textbox(
@@ -148,7 +197,7 @@ with gr.Blocks() as iface:
         num_issues = gr.Slider(
             minimum=1,
             maximum=100,
-            value=10,
+            value=5,
             step=1,
             label="Number of Issues to Scrape"
         )
@@ -158,8 +207,13 @@ with gr.Blocks() as iface:
             label="Issue State"
         )
     
-    scrape_button = gr.Button("Scrape")
-    scraped_output = gr.Textbox(label="Scraped Result")
+    with gr.Row() as url_components:
+        scrape_button = gr.Button("Scrape")
+    
+    with gr.Row(visible=False) as manual_submit:
+        submit_button = gr.Button("Submit Issue")
+    
+    scraped_output = gr.Textbox(label="Result")
     
     with gr.Row(visible=False) as classification_row:
         with gr.Column():
@@ -191,6 +245,12 @@ with gr.Blocks() as iface:
     scraped_issues = gr.State([])
     
     # Event handlers
+    input_type.change(
+        update_input_visibility,
+        inputs=[input_type],
+        outputs=[url_row, manual_input_row, manual_submit, url_components, url_status, project_controls]
+    )
+    
     url_input.change(
         update_scraping_controls,
         inputs=[url_input],
@@ -200,6 +260,12 @@ with gr.Blocks() as iface:
     scrape_button.click(
         process_url,
         inputs=[url_input, num_issues, issue_state],
+        outputs=[scraped_output, classification_row, scraped_issues]
+    )
+    
+    submit_button.click(
+        process_manual_issue,
+        inputs=[issue_title, issue_body],
         outputs=[scraped_output, classification_row, scraped_issues]
     )
     
@@ -229,4 +295,4 @@ if __name__ == "__main__":
         share=False,  # Set to True if you want a public URL
         show_error=True,
         quiet=False,  # This ensures the URL is printed
-    )   
+    )

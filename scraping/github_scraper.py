@@ -13,12 +13,13 @@ class Issue:
         self.reasoning = None
     
     def __str__(self):
+        url = f"URL: {self.url}\n\n" if self.url else ""
         if not self.classification:
-            return f"URL: {self.url}\n\nTitle: {self.title}\n\nBody: {self.body}"
+            return f"{url}Title: {self.title}\n\nBody: {self.body}"
         if self.reasoning:
-            return f"URL: {self.url}\n\nClassification: {self.classification}\n\nReasoning: {self.reasoning}"
+            return f"{url}Classification: {self.classification}\n\nReasoning: {self.reasoning}"
         else:
-            return f"URL: {self.url}\n\nClassification: {self.classification}"
+            return f"{url}Classification: {self.classification}"
 
 
 def validate_github_url(url: str) -> bool:
@@ -33,9 +34,9 @@ def validate_github_url(url: str) -> bool:
             org_name = url.split("/")[3]
             repo_name = url.split("/")[4]
             repo = g.get_repo(f"{org_name}/{repo_name}")
-    except:
+    except Exception:
         return False
-    
+
     return True
 
 
