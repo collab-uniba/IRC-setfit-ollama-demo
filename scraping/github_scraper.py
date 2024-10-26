@@ -10,12 +10,15 @@ class Issue:
         self.body = body
         self.url = url
         self.classification = None
+        self.reasoning = None
     
     def __str__(self):
-        if self.classification:
-            return f"URL: {self.url}\n\nClassification: {self.classification}"
-        else:
+        if not self.classification:
             return f"URL: {self.url}\n\nTitle: {self.title}\n\nBody: {self.body}"
+        if self.reasoning:
+            return f"URL: {self.url}\n\nClassification: {self.classification}\n\nReasoning: {self.reasoning}"
+        else:
+            return f"URL: {self.url}\n\nClassification: {self.classification}"
 
 
 def validate_github_url(url: str) -> bool:
