@@ -2,7 +2,8 @@ import gradio as gr
 from dataclasses import dataclass
 from typing import List, Union, Tuple
 import re
-from scraping.github_scraper import scrape_github_issues, Issue
+from scraping.github_scraper import scrape_github_issues
+from issue.issue import Issue
 from models.setfit_model import setfit_classify
 from models.llm_model import llm_classify, pull_ollama_model
 from models.model_config import ModelConfigLoader
@@ -14,20 +15,26 @@ def validate_github_url(url: str) -> Tuple[bool, str, str]:
     """Validates GitHub URL and determines if it's an issue or project URL"""
     if not url:
         return False, "Invalid", "Please enter a URL"
-    
+
     # GitHub URL patterns
     issue_pattern = r'https?://github\.com/[\w-]+/[\w-]+/issues/\d+'
     project_pattern = r'https?://github\.com/[\w-]+/[\w-]+'
     org_and_project_pattern = r'https?://github\.com/([\w-]+)/([\w-]+)'
-    issue_number_pattern = r'https?://github\.com/[\w-]+/[\w-]+/issues/(\d+)'
-
     if re.match(issue_pattern, url):
         org_and_project_match = re.search(org_and_project_pattern, url)
-        org_and_project_name = f"{org_and_project_match.group(1)}/{org_and_project_match.group(2)}"
-        return True, "issue", f"Valid issue URL,\nProject: {org_and_project_name}\nIssue Number: {re.search(issue_number_pattern, url).group(1)}"
+        org_and_project_name = f"{org_and_project_match[1]}/{org_and_project_match[2]}"
+        issue_number_pattern = r'https?://github\.com/[\w-]+/[\w-]+/issues/(\d+)'
+
+        return (
+            True,
+            "issue",
+            f"Valid issue URL,\nProject: {org_and_project_name}\nIssue Number: {re.search(issue_number_pattern, url)[1]}",
+        )
     elif re.match(project_pattern, url):
         org_and_project_match = re.search(org_and_project_pattern, url)
-        org_and_project_name = f"{org_and_project_match.group(1)}/{org_and_project_match.group(2)}"
+        org_and_project_name = (
+            f"{org_and_project_match[1]}/{org_and_project_match.group(2)}"
+        )
         return True, "project", f"Valid project URL,\nProject: {org_and_project_name}"
     else:
         return False, "invalid", "Invalid GitHub URL format"

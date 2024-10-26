@@ -16,10 +16,7 @@ def load_prompt_template(file_path):
 def format_prompt(template, issue):
     issue_title = issue.title
     issue_body = issue.body
-    prompt_parts = []
-
-    # Add task description
-    prompt_parts.append(template['task'])
+    prompt_parts = [template['task']]
 
     # Add label explanations if present
     if 'label_explanations' in template:
@@ -27,23 +24,10 @@ def format_prompt(template, issue):
 
     # Add example (the current issue)
     example = template['example'].format(title=issue_title, body=issue_body)
-    prompt_parts.append(example)
-
-    # Add format instructions
-    prompt_parts.append(template['format_instructions'])
-
-    # Add output placeholder
-    prompt_parts.append(template['output'])
-
+    prompt_parts.extend(
+        (example, template['format_instructions'], template['output'])
+    )
     return '\n\n'.join(prompt_parts), template['system']
-
-
-def get_label(text):
-    try:
-        label = re.search(r"(:?\\\"|\")label(:?\\\"|\"):\s*(:?\\\"|\")(bug|non-bug)(:?\\\"|\")", text, flags=re.DOTALL)[4]
-        return label
-    except Exception:
-        return "label not found in response"
 
 
 def postprocess_response(issue_response):
@@ -61,12 +45,13 @@ def llm_classify(issues, base_model='llama3.1'):
     responses = []
     if not isinstance(issues, list):
         issues = [issues]
-    
+
     for issue in issues:
         prompt = format_prompt(prompt_template, issue)
-        messages = []
-        messages.append({"role": "system", "content": prompt[1]})
-        messages.append({"role": "user", "content": prompt[0]})
+        messages = [
+            {"role": "system", "content": prompt[1]},
+            {"role": "user", "content": prompt[0]},
+        ]
         response = ollama.chat(model=base_model, messages=messages, format='json')
         responses.append((issue, response))
     return [postprocess_response(response) for response in responses]
