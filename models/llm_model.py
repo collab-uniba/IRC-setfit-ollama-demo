@@ -2,6 +2,7 @@ import ollama
 import re
 import yaml
 import os
+import json
 
 OLLAMA_HOST = os.getenv('OLLAMA_HOST', 'http://localhost:11434')
 
@@ -47,7 +48,10 @@ def get_label(text):
 
 def postprocess_response(issue_response):
     i, r = issue_response
-    i.classification = r['message']['content']
+    # parse json response
+    parsed_response = json.loads(r['message']['content'])
+    i.classification = parsed_response['label']
+    i.reasoning = parsed_response['reasoning']
     return i
 
 
@@ -63,6 +67,6 @@ def llm_classify(issues, base_model='llama3.1'):
         messages = []
         messages.append({"role": "system", "content": prompt[1]})
         messages.append({"role": "user", "content": prompt[0]})
-        response = ollama.chat(model=base_model, messages=messages)
+        response = ollama.chat(model=base_model, messages=messages, format='json')
         responses.append((issue, response))
     return [postprocess_response(response) for response in responses]
