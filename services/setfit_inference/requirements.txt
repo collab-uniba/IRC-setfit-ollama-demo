@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+pydantic
+setfit
+PyYAML
+python-multipart
+python-jose
+typing-extensions
+python-dotenv
+huggingface-hub
+loguru

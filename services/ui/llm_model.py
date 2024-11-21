@@ -4,7 +4,7 @@ import yaml
 import os
 import json
 
-OLLAMA_HOST = os.getenv('OLLAMA_HOST', 'http://localhost:11434')
+OLLAMA_HOST = os.getenv(f'OLLAMA_HOST', '0.0.0.0:11434')
 
 def pull_ollama_model(base_model):
     ollama.pull(base_model)
@@ -39,9 +39,9 @@ def postprocess_response(issue_response):
     return i
 
 
-def llm_classify(issues, base_model='llama3.1'):
+def llm_classify(issues, base_model='llama3.2'):
     ollama.pull(base_model)
-    prompt_template = load_prompt_template('prompting/bin-template.yaml')
+    prompt_template = load_prompt_template('prompt_templates/bin-template.yaml')
     responses = []
     if not isinstance(issues, list):
         issues = [issues]

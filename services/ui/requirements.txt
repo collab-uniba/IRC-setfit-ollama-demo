@@ -1,12 +1,9 @@
 requests
 pyGitHub
 pandas
-transformers
-setfit
 ollama
 gradio
 python-dotenv
 pytest
 loguru
-huggingface-hub
 pyYAML

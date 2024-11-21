@@ -2,14 +2,16 @@ import gradio as gr
 from dataclasses import dataclass
 from typing import List, Union, Tuple
 import re
+import requests
 from scraping.github_scraper import scrape_github_issues
-from issue.issue import Issue
-from models.setfit_model import setfit_classify
-from models.llm_model import llm_classify, pull_ollama_model
-from models.model_config import ModelConfigLoader
+from common.issue import Issue
+from llm_model import llm_classify, pull_ollama_model
+from model_config import ModelConfigLoader
 from loguru import logger
+import os
 
 model_loader = ModelConfigLoader()
+SETFIT_HOST = os.getenv('SETFIT_BASE_URL', 'http://localhost:8000')
 
 def validate_github_url(url: str) -> Tuple[bool, str, str]:
     """Validates GitHub URL and determines if it's an issue or project URL"""
@@ -32,9 +34,7 @@ def validate_github_url(url: str) -> Tuple[bool, str, str]:
         )
     elif re.match(project_pattern, url):
         org_and_project_match = re.search(org_and_project_pattern, url)
-        org_and_project_name = (
-            f"{org_and_project_match[1]}/{org_and_project_match.group(2)}"
-        )
+        org_and_project_name = f"{org_and_project_match[1]}/{org_and_project_match[2]}"
         return True, "project", f"Valid project URL,\nProject: {org_and_project_name}"
     else:
         return False, "invalid", "Invalid GitHub URL format"
@@ -96,6 +96,7 @@ def update_input_visibility(input_type: str):
             gr.update(visible=False),  # url_status
             gr.update(visible=False),  # project_controls
         ]
+
 def update_scraping_controls(url: str):
     """Updates visibility of scraping controls based on URL type"""
     is_valid, url_type, message = validate_github_url(url)
@@ -122,36 +123,85 @@ def update_scraping_controls(url: str):
 
 def classify_issues(issues: List[Tuple], model_type: str, base_model: str = None) -> List[Tuple]:
     if not isinstance(issues, list):
-        issues = [issues] 
-    if model_type == "setfit":
-        responses = setfit_classify(issues, base_model=base_model)
-    elif model_type == "ollama":
-        responses = llm_classify(issues, base_model=base_model)
-    return responses
+        issues = [issues]
+
+    if model_type == "ollama":
+        return llm_classify(issues, base_model=base_model)
+
+    elif model_type == "setfit":
+        # Convert issues to the format expected by the API
+        api_issues = [{"title": issue.title, "body": issue.body} for issue in issues]
+
+        try:
+            response = requests.post(
+                f"{SETFIT_HOST}/classify",
+                json={
+                    "issues": api_issues,
+                    "model_name": base_model
+                }
+            )
+            response.raise_for_status()
+            classified_issues = response.json()
+
+            # Update the original issues with classifications
+            for issue, classified in zip(issues, classified_issues):
+                issue.classification = classified["classification"]
+                issue.reasoning = None
+
+            return issues
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Error calling SetFit API: {str(e)}")
+            raise Exception(f"Failed to classify issues using SetFit API: {str(e)}") from e
+
+    return issues
 
 def classify_and_display(issues: List[Tuple], model: str, base_model: str, pull_status: str) -> str:
     if model == "ollama" and pull_status != "Model pulled successfully!":
         return "Please pull the Ollama model first before classification."
     
-    classified_issues = classify_issues(issues, model, base_model)
-    output = "Classified Issues:\n\n"
-    for issue in classified_issues:
-        output += str(issue) + "\n"
-        output += f"{'-'*50}\n"
-    return output
+    try:
+        classified_issues = classify_issues(issues, model, base_model)
+        output = "Classified Issues:\n\n"
+        for issue in classified_issues:
+            output += str(issue) + "\n"
+            output += f"{'-'*50}\n"
+        return output
+    except Exception as e:
+        return f"Classification error: {str(e)}"
 
-def update_model_choices(model_choice: str):
+async def update_model_choices(model_choice: str):
     if model_choice == "setfit":
-        return [
-            gr.update(
-                visible=True,
-                choices=model_loader.get_model_choices("setfit"),
-                value=model_loader.get_default_model("setfit"),
-                label="Select SetFit Base Model"
-            ),
-            gr.update(visible=False),
-            gr.update(visible=False)
-        ]
+        try:
+            # Get available models from the API
+            response = requests.get(f"{SETFIT_HOST}/models")
+            response.raise_for_status()
+            models_info = response.json()
+            available_models = [model["path"] for model in models_info["available_models"]]
+            default_model = models_info["default_model"]
+            
+            return [
+                gr.update(
+                    visible=True,
+                    choices=available_models,
+                    value=default_model,
+                    label="Select SetFit Base Model"
+                ),
+                gr.update(visible=False),
+                gr.update(visible=False)
+            ]
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Error fetching SetFit models: {str(e)}")
+            # Fallback to config file
+            return [
+                gr.update(
+                    visible=True,
+                    choices=model_loader.get_model_choices("setfit"),
+                    value=model_loader.get_default_model("setfit"),
+                    label="Select SetFit Base Model"
+                ),
+                gr.update(visible=False),
+                gr.update(visible=False)
+            ]
     else:  # ollama
         return [
             gr.update(

@@ -16,9 +16,9 @@ RUN wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
 # Download Ollama
 RUN curl -fsSL https://ollama.com/install.sh | sh
 
-# Copy initialization script and model config
-COPY models/init_ollama.sh /init_ollama.sh
-COPY models/models_config.yaml /models_config.yaml
+# Copy initialization script and model config from new locations
+COPY services/ollama/init_ollama.sh /init_ollama.sh
+COPY config/models_config.yaml /models_config.yaml
 
 # Ensure both files are executable and exist
 RUN chmod +x /init_ollama.sh && ls -l /models_config.yaml

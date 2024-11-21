@@ -1,7 +1,7 @@
 from typing import List
 from github import Github
 from loguru import logger
-from issue.issue import Issue
+from common.issue import Issue
 
 def validate_github_url(url: str) -> bool:
     """

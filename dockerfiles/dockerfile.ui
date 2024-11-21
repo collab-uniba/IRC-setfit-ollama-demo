@@ -1,0 +1,26 @@
+FROM python:3.12.7-slim
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && \
+    apt-get install -y curl && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+# Copy only requirements.txt first
+COPY services/ui/requirements.txt ./requirements.txt
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt 
+
+# Copy the UI service directory into the container
+COPY common /app/common
+COPY config /app/config
+COPY services/ui /app/
+
+# Make port 7860 available to the world outside this container
+EXPOSE 7860
+
+# Run the UI application when the container launches
+CMD ["python", "-m", "app"]

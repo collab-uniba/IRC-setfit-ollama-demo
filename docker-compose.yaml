@@ -2,32 +2,43 @@ services:
   ollama:
     build:
       context: .
-      dockerfile: dockerfile.ollama
+      dockerfile: dockerfiles/dockerfile.ollama
     container_name: ollama-service
     ports:
-      - "11434:11434"
-    volumes:
-      - ollama_data:/root/.ollama
+      - "${OLLAMA_PORT}:11434"
     environment:
-      - OLLAMA_HOST=0.0.0.0
+      - OLLAMA_HOST=${OLLAMA_HOST}
     restart: unless-stopped
-    healthcheck:
-      test: |
-        curl -f "http://localhost:11434/api/version" > /dev/null 2>&1 && echo 'Ollama is healthy' || echo 'Ollama is not healthy'
-      interval: 10s
-      timeout: 10s
-      retries: 3
-      start_period: 30s
+
+  setfit:
+    build:
+      context: .
+      dockerfile: dockerfiles/dockerfile.setfit
+    container_name: setfit-service
+    ports:
+      - "${SETFIT_PORT}:8000"
+    environment:
+      - HOST=${SETFIT_HOST}
+      - PORT=${SETFIT_PORT}
+    restart: unless-stopped
 
   app:
-    build: .
+    build:
+      context: .
+      dockerfile: dockerfiles/dockerfile.ui
+    container_name: ui-service
     ports:
-      - "7860:7860"
+      - "${UI_PORT}:7860"
     environment:
-      - OLLAMA_HOST=http://ollama:11434
+      - HOST=${UI_HOST}
+      - PORT=${UI_PORT}
+      - OLLAMA_HOST=${DOCKER_OLLAMA_BASE_URL}
+      - SETFIT_BASE_URL=${DOCKER_SETFIT_BASE_URL}
     depends_on:
       ollama:
-        condition: service_healthy
+        condition: service_started
+      setfit:
+        condition: service_started
     restart: unless-stopped
 
 volumes:

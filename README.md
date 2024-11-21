@@ -5,6 +5,8 @@
 
 ## Installation
 
+If you want to run the application in a Docker container, follow the instructions below.
+
 1. **Install Docker**:
     - For Windows and macOS, download and run the Docker Desktop installer.
     - For Linux, use the package manager to install Docker. For example, on Ubuntu:
@@ -17,6 +19,14 @@
     ```sh
     docker --version
     ```
+
+If you want to run the application locally, follow the instructions below.
+
+1. **Install Python**:
+    - Download and install Python from the [official website](https://www.python.org/downloads/).
+    - The version used in this project is Python 3.12.7.
+
+2. 
 
 ## Running the Application
 

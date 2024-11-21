@@ -10,7 +10,7 @@ class ModelConfig:
     default: bool = False
 
 class ModelConfigLoader:
-    def __init__(self, config_path: str = "models/models_config.yaml"):
+    def __init__(self, config_path: str = "config/models_config.yaml"):
         self.config_path = config_path
         self.setfit_models: List[ModelConfig] = []
         self.ollama_models: List[ModelConfig] = []

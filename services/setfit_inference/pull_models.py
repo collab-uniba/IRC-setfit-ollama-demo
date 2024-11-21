@@ -50,7 +50,7 @@ def main():
     setup_logging()
     logger.info("Starting SetFit model pull process")
     
-    config = load_model_config("models/models_config.yaml")
+    config = load_model_config("config/models_config.yaml")
     
     # Pull all SetFit models
     success = True
