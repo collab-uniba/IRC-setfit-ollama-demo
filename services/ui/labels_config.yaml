@@ -1,0 +1,5 @@
+labels:
+  - name: bug
+    description: "The 'bug' label is used to identify an issue report that describes a problem or error within the software or codebase. It indicates that something is not functioning as intended or producing unexpected results. Bug reports help developers identify and fix issues to improve the overall quality and reliability of the software."
+  - name: non-bug
+    description: "The 'non-bug' label is applied to any issue that is not a bug. This includes feature requests, questions, documentation improvements, or any other type of issue that does not describe a malfunction in the software. These issues may still be important but do not represent defects in the code that need immediate fixing."

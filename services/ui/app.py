@@ -7,6 +7,7 @@ from scraping.github_scraper import scrape_github_issues
 from common.issue import Issue
 from llm_model import llm_classify, pull_ollama_model
 from model_config import ModelConfigLoader
+from label_config_manager import get_label_manager
 from loguru import logger
 import os
 
@@ -221,8 +222,98 @@ def pull_model(base_model: str) -> str:
     except Exception as e:
         return f"Error pulling model: {str(e)}"
 
+# Label management functions
+def get_labels_dataframe():
+    """Get labels as a list of lists for Gradio dataframe."""
+    label_manager = get_label_manager()
+    labels = label_manager.read_labels()
+    return [[label['name'], label['description']] for label in labels]
+
+def add_new_label(name: str, description: str) -> Tuple[List[List[str]], str]:
+    """Add a new label to the configuration."""
+    if not name or not description:
+        return get_labels_dataframe(), "Error: Both name and description are required"
+    
+    try:
+        label_manager = get_label_manager()
+        label_manager.add_label(name.strip(), description.strip())
+        return get_labels_dataframe(), f"Label '{name}' added successfully!"
+    except Exception as e:
+        return get_labels_dataframe(), f"Error: {str(e)}"
+
+def update_label(old_name: str, new_name: str, new_description: str) -> Tuple[List[List[str]], str]:
+    """Update an existing label."""
+    if not old_name or not new_name or not new_description:
+        return get_labels_dataframe(), "Error: All fields are required"
+    
+    try:
+        label_manager = get_label_manager()
+        label_manager.update_label(old_name.strip(), new_name.strip(), new_description.strip())
+        return get_labels_dataframe(), f"Label '{old_name}' updated successfully!"
+    except Exception as e:
+        return get_labels_dataframe(), f"Error: {str(e)}"
+
+def delete_label(name: str) -> Tuple[List[List[str]], str]:
+    """Delete a label from the configuration."""
+    if not name:
+        return get_labels_dataframe(), "Error: Label name is required"
+    
+    try:
+        label_manager = get_label_manager()
+        label_manager.delete_label(name.strip())
+        return get_labels_dataframe(), f"Label '{name}' deleted successfully!"
+    except Exception as e:
+        return get_labels_dataframe(), f"Error: {str(e)}"
+
+def populate_edit_fields(evt: gr.SelectData, labels_data: List[List[str]]) -> Tuple[str, str, str]:
+    """Populate edit fields when a row is selected from the labels table."""
+    if evt.index is not None and evt.index[0] < len(labels_data):
+        row_data = labels_data[evt.index[0]]
+        return row_data[0], row_data[0], row_data[1]  # old_name, new_name, new_description
+    return "", "", ""
+
 with gr.Blocks() as iface:
     gr.Markdown("# GitHub Issue/Project Scraper and Classifier")
+    
+    # Label Management Section
+    with gr.Accordion("Label Management", open=False):
+        gr.Markdown("### Manage Classification Labels")
+        gr.Markdown("Configure the labels used for issue classification. Changes are saved immediately and will be used in the next classification.")
+        
+        # Display current labels
+        labels_table = gr.Dataframe(
+            headers=["Label Name", "Description"],
+            value=get_labels_dataframe(),
+            label="Current Labels",
+            interactive=False,
+            wrap=True
+        )
+        
+        # Add new label
+        with gr.Row():
+            with gr.Column():
+                gr.Markdown("#### Add New Label")
+                new_label_name = gr.Textbox(label="Label Name", placeholder="e.g., feature-request")
+                new_label_description = gr.Textbox(
+                    label="Description", 
+                    placeholder="Describe what this label represents...",
+                    lines=3
+                )
+                add_label_btn = gr.Button("Add Label", variant="primary")
+        
+        # Edit existing label
+        with gr.Row():
+            with gr.Column():
+                gr.Markdown("#### Edit Label (click a row above to populate fields)")
+                edit_old_name = gr.Textbox(label="Current Label Name", interactive=False)
+                edit_new_name = gr.Textbox(label="New Label Name")
+                edit_description = gr.Textbox(label="New Description", lines=3)
+                with gr.Row():
+                    update_label_btn = gr.Button("Update Label", variant="secondary")
+                    delete_label_btn = gr.Button("Delete Label", variant="stop")
+        
+        # Status message for label operations
+        label_status = gr.Textbox(label="Status", interactive=False, value="")
     
     # Input type selector
     input_type = gr.Radio(
@@ -342,6 +433,31 @@ with gr.Blocks() as iface:
         classify_and_display,
         inputs=[scraped_issues, model_dropdown, base_model_dropdown, pull_status],
         outputs=classified_output
+    )
+    
+    # Label management event handlers
+    labels_table.select(
+        populate_edit_fields,
+        inputs=[labels_table],
+        outputs=[edit_old_name, edit_new_name, edit_description]
+    )
+    
+    add_label_btn.click(
+        add_new_label,
+        inputs=[new_label_name, new_label_description],
+        outputs=[labels_table, label_status]
+    )
+    
+    update_label_btn.click(
+        update_label,
+        inputs=[edit_old_name, edit_new_name, edit_description],
+        outputs=[labels_table, label_status]
+    )
+    
+    delete_label_btn.click(
+        delete_label,
+        inputs=[edit_old_name],
+        outputs=[labels_table, label_status]
     )
 
 if __name__ == "__main__":   
