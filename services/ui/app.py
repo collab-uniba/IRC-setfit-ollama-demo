@@ -267,9 +267,12 @@ def delete_label(name: str) -> Tuple[List[List[str]], str]:
 
 def populate_edit_fields(evt: gr.SelectData, labels_data: List[List[str]]) -> Tuple[str, str, str]:
     """Populate edit fields when a row is selected from the labels table."""
-    if evt.index is not None and evt.index[0] < len(labels_data):
-        row_data = labels_data[evt.index[0]]
-        return row_data[0], row_data[0], row_data[1]  # old_name, new_name, new_description
+    try:
+        if evt.index is not None and len(evt.index) > 0 and evt.index[0] < len(labels_data):
+            row_data = labels_data[evt.index[0]]
+            return row_data[0], row_data[0], row_data[1]  # old_name, new_name, new_description
+    except (TypeError, IndexError, AttributeError):
+        pass
     return "", "", ""
 
 with gr.Blocks() as iface:

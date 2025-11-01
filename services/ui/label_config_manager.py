@@ -38,7 +38,8 @@ class LabelConfigManager:
                     config = yaml.safe_load(f)
                     return config.get('labels', [])
             except FileNotFoundError:
-                # Return default labels if file doesn't exist
+                # Return default labels if file doesn't exist (fallback only)
+                # These match the initial labels in labels_config.yaml
                 return [
                     {
                         'name': 'bug',
