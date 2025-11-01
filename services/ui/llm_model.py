@@ -23,32 +23,18 @@ def format_prompt(template, issue):
     label_names = label_manager.get_label_list_string()
     label_explanations = label_manager.format_label_explanations()
     
-    # Update task with dynamic label list
-    task = template['task']
-    # Replace the hardcoded label list with dynamic labels
-    if 'Possible labels are:' in task:
-        task_lines = task.split('\n')
-        for i, line in enumerate(task_lines):
-            if 'Possible labels are:' in line:
-                task_lines[i] = f'  Possible labels are: {label_names}'
-        task = '\n'.join(task_lines)
+    # Replace placeholders in template sections with dynamic label data
+    task = template['task'].format(label_list=label_names)
+    label_explanations_section = template['label_explanations'].format(label_explanations=label_explanations)
+    format_instructions = template['format_instructions'].format(label_list=label_names)
     
     prompt_parts = [task]
 
     # Add dynamic label explanations
-    prompt_parts.append(label_explanations)
+    prompt_parts.append(label_explanations_section)
 
     # Add example (the current issue)
     example = template['example'].format(title=issue_title, body=issue_body)
-    
-    # Update format_instructions with dynamic label list
-    format_instructions = template['format_instructions']
-    if 'Possible labels are:' in format_instructions:
-        format_lines = format_instructions.split('\n')
-        for i, line in enumerate(format_lines):
-            if 'Possible labels are:' in line:
-                format_lines[i] = f'      "label": "string"  // The label to assign to the issue. Possible labels are: {label_names}.'
-        format_instructions = '\n'.join(format_lines)
     
     prompt_parts.extend(
         (example, format_instructions, template['output'])
