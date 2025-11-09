@@ -229,51 +229,62 @@ def get_labels_dataframe():
     labels = label_manager.read_labels()
     return [[label['name'], label['description']] for label in labels]
 
-def add_new_label(name: str, description: str) -> Tuple[List[List[str]], str]:
+def get_label_names():
+    """Get list of label names for dropdown."""
+    label_manager = get_label_manager()
+    labels = label_manager.read_labels()
+    return [label['name'] for label in labels]
+
+def add_new_label(name: str, description: str) -> Tuple[List[List[str]], gr.update, str]:
     """Add a new label to the configuration."""
     if not name or not description:
-        return get_labels_dataframe(), "Error: Both name and description are required"
+        return get_labels_dataframe(), gr.update(choices=get_label_names(), value=None), "Error: Both name and description are required"
     
     try:
         label_manager = get_label_manager()
         label_manager.add_label(name.strip(), description.strip())
-        return get_labels_dataframe(), f"Label '{name}' added successfully!"
+        return get_labels_dataframe(), gr.update(choices=get_label_names(), value=None), f"Label '{name}' added successfully!"
     except Exception as e:
-        return get_labels_dataframe(), f"Error: {str(e)}"
+        return get_labels_dataframe(), gr.update(choices=get_label_names(), value=None), f"Error: {str(e)}"
 
-def update_label(old_name: str, new_name: str, new_description: str) -> Tuple[List[List[str]], str]:
-    """Update an existing label."""
-    if not old_name or not new_name or not new_description:
-        return get_labels_dataframe(), "Error: All fields are required"
+def populate_edit_fields_from_dropdown(selected_label: str) -> Tuple[str, str]:
+    """Populate edit fields when a label is selected from dropdown."""
+    if not selected_label:
+        return "", ""
     
     try:
         label_manager = get_label_manager()
-        label_manager.update_label(old_name.strip(), new_name.strip(), new_description.strip())
-        return get_labels_dataframe(), f"Label '{old_name}' updated successfully!"
-    except Exception as e:
-        return get_labels_dataframe(), f"Error: {str(e)}"
-
-def delete_label(name: str) -> Tuple[List[List[str]], str]:
-    """Delete a label from the configuration."""
-    if not name:
-        return get_labels_dataframe(), "Error: Label name is required"
-    
-    try:
-        label_manager = get_label_manager()
-        label_manager.delete_label(name.strip())
-        return get_labels_dataframe(), f"Label '{name}' deleted successfully!"
-    except Exception as e:
-        return get_labels_dataframe(), f"Error: {str(e)}"
-
-def populate_edit_fields(evt: gr.SelectData, labels_data: List[List[str]]) -> Tuple[str, str, str]:
-    """Populate edit fields when a row is selected from the labels table."""
-    try:
-        if evt.index is not None and len(evt.index) > 0 and evt.index[0] < len(labels_data):
-            row_data = labels_data[evt.index[0]]
-            return row_data[0], row_data[0], row_data[1]  # old_name, new_name, new_description
-    except (TypeError, IndexError, AttributeError):
+        labels = label_manager.read_labels()
+        for label in labels:
+            if label['name'] == selected_label:
+                return label['name'], label['description']
+    except Exception:
         pass
-    return "", "", ""
+    return "", ""
+
+def update_label(selected_label: str, new_name: str, new_description: str) -> Tuple[List[List[str]], gr.update, str, str]:
+    """Update an existing label."""
+    if not selected_label or not new_name or not new_description:
+        return get_labels_dataframe(), gr.update(choices=get_label_names(), value=None), "", "Error: All fields are required"
+    
+    try:
+        label_manager = get_label_manager()
+        label_manager.update_label(selected_label.strip(), new_name.strip(), new_description.strip())
+        return get_labels_dataframe(), gr.update(choices=get_label_names(), value=None), "", f"Label '{selected_label}' updated successfully!"
+    except Exception as e:
+        return get_labels_dataframe(), gr.update(choices=get_label_names(), value=None), "", f"Error: {str(e)}"
+
+def delete_label(selected_label: str) -> Tuple[List[List[str]], gr.update, str, str]:
+    """Delete a label from the configuration."""
+    if not selected_label:
+        return get_labels_dataframe(), gr.update(choices=get_label_names(), value=None), "", "Error: Label name is required"
+    
+    try:
+        label_manager = get_label_manager()
+        label_manager.delete_label(selected_label.strip())
+        return get_labels_dataframe(), gr.update(choices=get_label_names(), value=None), "", f"Label '{selected_label}' deleted successfully!"
+    except Exception as e:
+        return get_labels_dataframe(), gr.update(choices=get_label_names(), value=None), "", f"Error: {str(e)}"
 
 with gr.Blocks() as iface:
     gr.Markdown("# GitHub Issue/Project Scraper and Classifier")
@@ -304,13 +315,18 @@ with gr.Blocks() as iface:
                 )
                 add_label_btn = gr.Button("Add Label", variant="primary")
         
-        # Edit existing label
+        # Edit/Delete existing label
         with gr.Row():
             with gr.Column():
-                gr.Markdown("#### Edit Label (click a row above to populate fields)")
-                edit_old_name = gr.Textbox(label="Current Label Name", interactive=False)
-                edit_new_name = gr.Textbox(label="New Label Name")
-                edit_description = gr.Textbox(label="New Description", lines=3)
+                gr.Markdown("#### Edit or Delete Label")
+                label_selector = gr.Dropdown(
+                    choices=get_label_names(),
+                    label="Select Label to Edit or Delete",
+                    value=None,
+                    interactive=True
+                )
+                edit_new_name = gr.Textbox(label="New Label Name", value="")
+                edit_description = gr.Textbox(label="New Description", lines=3, value="")
                 with gr.Row():
                     update_label_btn = gr.Button("Update Label", variant="secondary")
                     delete_label_btn = gr.Button("Delete Label", variant="stop")
@@ -439,28 +455,28 @@ with gr.Blocks() as iface:
     )
     
     # Label management event handlers
-    labels_table.select(
-        populate_edit_fields,
-        inputs=[labels_table],
-        outputs=[edit_old_name, edit_new_name, edit_description]
+    label_selector.change(
+        populate_edit_fields_from_dropdown,
+        inputs=[label_selector],
+        outputs=[edit_new_name, edit_description]
     )
     
     add_label_btn.click(
         add_new_label,
         inputs=[new_label_name, new_label_description],
-        outputs=[labels_table, label_status]
+        outputs=[labels_table, label_selector, label_status]
     )
     
     update_label_btn.click(
         update_label,
-        inputs=[edit_old_name, edit_new_name, edit_description],
-        outputs=[labels_table, label_status]
+        inputs=[label_selector, edit_new_name, edit_description],
+        outputs=[labels_table, label_selector, edit_new_name, label_status]
     )
     
     delete_label_btn.click(
         delete_label,
-        inputs=[edit_old_name],
-        outputs=[labels_table, label_status]
+        inputs=[label_selector],
+        outputs=[labels_table, label_selector, edit_new_name, label_status]
     )
 
 if __name__ == "__main__":   
