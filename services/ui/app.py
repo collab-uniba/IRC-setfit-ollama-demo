@@ -356,7 +356,8 @@ with gr.Blocks() as iface:
     url_status = gr.Textbox(
         label="URL Status",
         interactive=False,
-        value=""
+        value="",
+        lines=3
     )
     
     # Project-specific controls
@@ -380,7 +381,7 @@ with gr.Blocks() as iface:
     with gr.Row(visible=False) as manual_submit:
         submit_button = gr.Button("Submit Issue")
     
-    scraped_output = gr.Textbox(label="Result")
+    scraped_output = gr.Textbox(label="Result", lines=10)
     
     with gr.Row(visible=False) as classification_row:
         with gr.Column():
@@ -402,12 +403,13 @@ with gr.Blocks() as iface:
                 pull_status = gr.Textbox(
                     label="Pull Status",
                     interactive=False,
-                    value=""
+                    value="",
+                    lines=3
                 )
             
         classify_button = gr.Button("Classify Issues")
     
-    classified_output = gr.Textbox(label="Classified Result")
+    classified_output = gr.Textbox(label="Classified Result", lines=10)
     
     scraped_issues = gr.State([])
     
