@@ -12,15 +12,7 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Download models at build time to avoid runtime delays
-RUN python -c "from sentence_transformers import SentenceTransformer, CrossEncoder; \
-    print('Downloading embedding model...'); \
-    SentenceTransformer('sentence-transformers/all-mpnet-base-v2'); \
-    print('Downloading reranker model...'); \
-    CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2'); \
-    print('Models downloaded successfully')"
+RUN pip install --no-cache-dir --trusted-host pypi.org --trusted-host pypi.python.org --trusted-host files.pythonhosted.org -r requirements.txt
 
 # Make port 8001 available
 EXPOSE 8001
