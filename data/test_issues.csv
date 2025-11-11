@@ -1,0 +1,11 @@
+title,body,label,url
+"Memory leak in training loop","When training for extended periods, memory usage continuously increases without being released. This eventually leads to OOM errors.","bug,memory","https://github.com/example/repo/issues/123"
+"Add support for distributed training","It would be great to have built-in support for multi-GPU and multi-node training using PyTorch DDP.","enhancement,feature-request","https://github.com/example/repo/issues/124"
+"Documentation: Getting started guide incomplete","The getting started guide is missing information about installing dependencies on Windows.","documentation,good-first-issue","https://github.com/example/repo/issues/125"
+"Performance degradation in version 2.0","After upgrading to version 2.0, inference speed has decreased by approximately 30%. This is affecting production workloads.","bug,performance","https://github.com/example/repo/issues/126"
+"Request: Add ONNX export support","Would love to see native support for exporting models to ONNX format for deployment optimization.","enhancement","https://github.com/example/repo/issues/127"
+"Crash when loading large datasets","Application crashes with segmentation fault when attempting to load datasets larger than 10GB.","bug,critical","https://github.com/example/repo/issues/128"
+"Add examples for fine-tuning on custom data","The documentation lacks clear examples of how to fine-tune models on custom datasets. This would be very helpful for beginners.","documentation,enhancement","https://github.com/example/repo/issues/129"
+"GPU memory not properly released","After model inference, GPU memory remains allocated even after deleting the model object. Requires manual cache clearing.","bug,memory","https://github.com/example/repo/issues/130"
+"Support for mixed precision training","Implement automatic mixed precision (AMP) training to improve performance and reduce memory usage.","enhancement,feature-request","https://github.com/example/repo/issues/131"
+"API documentation outdated","The API reference documentation doesn't match the current version. Several methods and parameters are missing or incorrect.","documentation","https://github.com/example/repo/issues/132"

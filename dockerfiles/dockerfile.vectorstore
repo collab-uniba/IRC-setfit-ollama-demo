@@ -1,0 +1,29 @@
+# Use an official Python runtime as a parent image
+FROM python:3.12.7-slim
+
+WORKDIR /app
+
+# Copy service files
+COPY services/vector_store /app/
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Download models at build time to avoid runtime delays
+RUN python -c "from sentence_transformers import SentenceTransformer, CrossEncoder; \
+    print('Downloading embedding model...'); \
+    SentenceTransformer('sentence-transformers/all-mpnet-base-v2'); \
+    print('Downloading reranker model...'); \
+    CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2'); \
+    print('Models downloaded successfully')"
+
+# Make port 8001 available
+EXPOSE 8001
+
+# Run the API server when the container launches
+CMD ["uvicorn", "vector_store_api:app", "--host", "0.0.0.0", "--port", "8001"]
