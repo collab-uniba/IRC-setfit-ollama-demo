@@ -1,0 +1,3451 @@
+title,body,label,url
+Graviation compass system ref component,"| | |
+|:---|:---|
+|**_F´ Version_**| |
+|**_Affected Component_**|  |
+---
+## Feature Description
+
+Create an application that takes data from the IMU and adjusts the position of a rotor so that the arrow attached to the rotor points straight up.
+
+## Rationale
+
+This component will demonstrate control data flow. 
+",non-bug,https://github.com/nasa/fprime/issues/2118
+Have CI compile match user compile,"| | |
+|:---|:---|
+|**_F´ Version_**| 3.0 |
+|**_Affected Component_**|  |
+---
+## Feature Description
+
+Have the CI compile flags match the user compile flags.
+
+## Rationale
+
+CI builds, especially unit tests, often fail because the compile arguments are stricter than the ones that the user can use. This can cause multiple branch pushes to a PR just to get CI to pass. The compiler arguments should match or alternatively the user could be provided a script or cmake command to make sure CI won't fail before pushing to CI.",non-bug,https://github.com/nasa/fprime/issues/1532
+MathComponent Tutorial - missing CMD_SEQ macro definition for testThrottle(),"| | |
+|:---|:---|
+|**_F´ Version_**| head devel |
+|**_Affected Component_**| MathComponent Tutorial |
+---
+## Problem Description
+
+There is an issue in the section [5.5.3. Write and Run Tests](https://github.com/nasa/fprime/blob/devel/docs/Tutorials/MathComponent/Tutorial.md#553-write-and-run-tests) of the MathComponent tutorial.
+
+Indeed, in the code snippet of the ``testThrottle()``, the symbol ``CMD_SEQ`` is not defined by default.
+
+```bash
+$ fprime-util build --ut
+[  0%] Built target Fw_Cfg
+[ 10%] Built target codegen
+[ 20%] Built target Fw_Types
+[ 20%] Built target Fw_Logger
+[ 20%] Built target Fw_Obj
+[ 30%] Built target Fw_Port
+[ 30%] Built target Fw_Time
+[ 30%] Built target Fw_Com
+[ 40%] Built target Fw_Tlm
+[ 50%] Built target Fw_Log
+[ 60%] Built target Fw_Cmd
+[ 60%] Built target Fw_Prm
+[ 60%] Built target Ref_MathTypes
+[ 60%] Built target Ref_MathPorts
+[ 60%] Built target Utils_Hash
+[ 60%] Built target Fw_Comp
+[ 80%] Built target Os
+[ 80%] Built target Fw_CompQueued
+[ 90%] Built target Svc_Sched
+[ 90%] Built target Ref_MathReceiver
+[ 90%] Built target gtest
+[100%] Built target gtest_main
+[100%] Built target STest
+Scanning dependencies of target Ref_MathReceiver_ut_exe
+[100%] Building CXX object Ref/MathReceiver/CMakeFiles/Ref_MathReceiver_ut_exe.dir/test/ut/main.o
+[100%] Building CXX object Ref/MathReceiver/CMakeFiles/Ref_MathReceiver_ut_exe.dir/test/ut/Tester.o
+/mnt/c/Users/ThibFrgsGmz/fprime_lab/fprime/Ref/MathReceiver/test/ut/Tester.cpp: In member function ‘void Ref::Tester::testThrottle()’:
+/mnt/c/Users/ThibFrgsGmz/fprime_lab/fprime/Ref/MathReceiver/test/ut/Tester.cpp:335:52: error: ‘CMD_SEQ’ was not declared in this scope
+  335 |       this->sendCmd_CLEAR_EVENT_THROTTLE(INSTANCE, CMD_SEQ);
+      |                                                    ^~~~~~~
+make[3]: *** [Ref/MathReceiver/CMakeFiles/Ref_MathReceiver_ut_exe.dir/build.make:111: Ref/MathReceiver/CMakeFiles/Ref_MathReceiver_ut_exe.dir/test/ut/Tester.o] Error 1
+make[2]: *** [CMakeFiles/Makefile2:31252: Ref/MathReceiver/CMakeFiles/Ref_MathReceiver_ut_exe.dir/all] Error 2
+make[1]: *** [CMakeFiles/Makefile2:31259: Ref/MathReceiver/CMakeFiles/Ref_MathReceiver_ut_exe.dir/rule] Error 2
+make: *** [Makefile:10939: Ref_MathReceiver_ut_exe] Error 2
+[ERROR] CMake erred with return code 2
+```
+
+Unlike the ``INSTANCE`` macro, the ``CMD_SED`` symbol is not defined by default in the ``Tester.cpp`` file.
+
+## How to Reproduce
+
+1. Follow the MathComponent tutorial from [""Write and Run Unit Tests""](https://github.com/nasa/fprime/blob/devel/docs/Tutorials/MathComponent/Tutorial.md#55-write-and-run-unit-tests)
+2. Reach the ""Writing an Accelerator Test"" section
+3. Run ``fprime-util build --ut``.
+
+## Expected Behavior
+
+To solve this issue, the tutorial should inform the user to manually set the macro at the top of the ``TestER.cpp`` file:
+
+```cpp
+#define CMD_SEQ 0
+```
+
+Either the macro must be generated automatically in the same way as the ``INSTANCE`` macro.
+",bug,https://github.com/nasa/fprime/issues/1319
+Create Svc::ComInterface from Svc::ComStub,"| | |
+|:---|:---|
+|**_F´ Version_**| |
+|**_Affected Component_**|  |
+---
+## Feature Description
+
+Make an interface out of the ComStub protocol. See #2255 for an example interface change set.
+
+The following three ports should be pulled out of `Svc::ComStub` into `Svc/Interfaces/ComInterface.fppi` such that implementers of the `Com` [pattern](https://github.com/nasa/fprime/blob/devel/docs/Design/communication-adapter-interface.md) may quickly implement new `Com` drop-ins.
+
+https://github.com/nasa/fprime/blob/a73bff28617b96736c0e3e222e4c6e1dea1c6f5e/Svc/ComStub/ComStub.fpp#L9-L16
+
+
+
+
+
+",non-bug,https://github.com/nasa/fprime/issues/2257
+Os::Task::taskRoutine not compliant with POSIX Thread Entrypoint,"| | |
+|:---|:---|
+|**_F´ Version_**| devel |
+|**_Affected Component_**| Os  |
+---
+## Problem Description
+
+F Prime's threads have no return value, which was likely done to provide greater compatibility across different platforms.
+However, POSIX threads are expected to return a `void *`. This causes compilation errors, since returning void when a return value is expected is undefined behavior.  
+
+We should either wrap the user provided taskRoutine with another function that returns 0 or change taskRoutine to expect a return value.
+
+From compiling with `-Wextra`:
+
+```
+/fprime/Os/Posix/Task.cpp: In member function ‘Os::Task::TaskStatus Os::Task::start(const Fw::StringBase&, NATIVE_INT_TYPE, NATIVE_INT_TYPE, NATIVE_INT_TYPE, Os::Task::taskRoutine, void*, NATIVE_INT_TYPE)’:
+/fprime/Os/Posix/Task.cpp:119:58: error: cast between incompatible function types from ‘Os::Task::taskRoutine’ {aka ‘void (*)(void*)’} to ‘pthread_func_ptr’ {aka ‘void* (*)(void*)’} [-Werror=cast-function-type]
+  119 |         stat = pthread_create(tid,&att,(pthread_func_ptr)routine,arg);
+```
+",bug,https://github.com/nasa/fprime/issues/661
+Do not comment out `loadParameters()`,"| | |
+|:---|:---|
+|**_F´ Version_**| |
+|**_Affected Component_**| Topology  |
+---
+## Problem Description
+
+The autocoder does not put `loadParameters()` in to the Topology.cpp. This should be added regardless of if there are parameters defined or not.
+
+## Context / Environment
+
+
+
+## How to Reproduce
+
+
+## Expected Behavior
+
+`loadParameters()` should not be commented out in Topology.cpp",bug,https://github.com/nasa/fprime/issues/2774
+Python 3.12 Support,"| | |
+|:---|:---|
+|**_F´ Version_**| |
+|**_Affected Component_**|   |
+---
+## Problem Description
+
+With the introduction of Python 3.12, things have started breaking (e.g. pkg_resources importation), zmq installs, etc.  We should fix this.",bug,https://github.com/nasa/fprime/issues/2321
+Create TickDriver Interface,"| | |
+|:---|:---|
+|**_F´ Version_**| |
+|**_Affected Component_**|  |
+---
+## Feature Description
+
+Make an interface out of Drv/BlockDriver. See #2255 for an example interface change set.
+
+The following three ports should be pulled out of `Drv::BlockDriver` into `Svc/Interfaces/TickInterface.fppi` such that other rate group driver tick drivers can use it.
+
+https://github.com/nasa/fprime/blob/a73bff28617b96736c0e3e222e4c6e1dea1c6f5e/Drv/BlockDriver/BlockDriver.fpp#L16-L17
+
+Note: annotations should be added to explain what each port does.",non-bug,https://github.com/nasa/fprime/issues/2583
+Create example fpp-to-dict JSON output based on spec,"| | |
+|:---|:---|
+|**_F´ Version_**| |
+|**_Affected Component_**|  |
+---
+## Feature Description
+
+A quick description of the requested feature.
+
+## Rationale
+
+A rationale for why the feature should be implemented in F´.
+",non-bug,https://github.com/nasa/fprime/issues/2400
+Python support: drop v3.6 and add v3.10,"| | |
+|:---|:---|
+|**_F´ Version_**| 3.0 |
+|**_Affected Component_**| python codebase  |
+---
+## Problem Description
+
+As mentioned by @LeStarch in https://github.com/fprime-community/fprime-tools/pull/53#issuecomment-1111244597, FPrime must support active versions of Python. 
+
+According to https://endoflife.date/python, the Python ``3.6`` version is deprecated as of ``December 23, 2021``, the framework will no longer receive updates or bug fixes.
+
+So theoretically, support for Python ``3.6`` must be removed from the framework (CI runners, Pypi,...).
+
+In addition, Python ``3.10`` is available and active as of ``October 4, 2021`` and therefore should be supported by the framework.
+
+## How to Reproduce
+
+void
+
+## Expected Behavior
+
+- Drop v3.6 support (remove from CI runner, Pypi)
+- Add v3.10 support (add CI runner, Pypi)
+",bug,https://github.com/nasa/fprime/issues/1488
+Integration Test API: Need `await_connection`,"| | |
+|:---|:---|
+|**_F´ Version_**| |
+|**_Affected Component_**|   |
+---
+## Problem Description
+
+Need a function to await for any data flow (FSW connection).",bug,https://github.com/nasa/fprime/issues/2642
+Run LedBlinker (and others?) on self-hosted agents,"| | |
+|:---|:---|
+|**_F´ Version_**| |
+|**_Affected Component_**|  |
+---
+## Feature Description
+
+Following up on https://github.com/nasa/fprime/issues/2000, we want to add pretty much the same, but to build with cross-compilers and run on our self-hosted agents.
+Might be worth creating a second reusable workflow like project-builder with cross compilers, but it might be easier to skip that step if only LedBlinker is intended to be ran on RPIs.
+
+## Rationale
+
+Moar tests, on RaspberryPi this time.
+",non-bug,https://github.com/nasa/fprime/issues/2102
+Add standard FPP types,"| | |
+|:---|:---|
+|**_F´ Version_**| 3.0 |
+|**_Affected Component_**| None |
+---
+## Feature Description
+
+Add some common types that users could use. Things like:
+
+ON, OFF (ex. a device)
+HIGH, LOW (logic level)
+OPEN, CLOSED (file, cover, etc)
+IN, OUT (direction of flow)
+ACTIVE, INACTIVE (behavior)
+HEALTHY, SICK, FAILED (Device health)
+
+## Rationale
+
+Would avoid users defining them again and again.
+",non-bug,https://github.com/nasa/fprime/issues/1486
+CMake: UTs Don't Depend on Telemetry/Events XMLs,"Changes to Telemetry and Events XMLs don't cause a rebuild of the UT files.
+
+Workarounds:
+
+1. Purge build cache (UT)
+2. `make clean` in build cache (UT)
+",bug,https://github.com/nasa/fprime/issues/263
+add hardware interface tutorial,"| | |
+|:---|:---|
+|**_F´ Version_**| v3.0.1 |
+|**_Affected Component_**|  |
+---
+## Feature Description
+
+A tutorial for building a component that provides a means to communicate with external hardware, s.a., via I2C
+
+## Rationale
+
+Such a tutorial would be useful for reading external sensors, s.a., temperature sensors, magnetometers, accelerometers, etc.",non-bug,https://github.com/nasa/fprime/issues/1329
+Force Git Clone To Select Unix Line Endings,"| | |
+|:---|:---|
+|**_F´ Version_**| |
+|**_Affected Component_**|   |
+---
+## Problem Description
+
+fprime-bootstrap clones forums without specifying Unix line endings.  In some cases this can cause files to checkout with Windows line endings that then breaks tools.
+
+We should supply get with designated flags to use Unix line ending.
+
+## Context / Environment
+
+WSL
+",bug,https://github.com/nasa/fprime/issues/2566
+No assertion when ping port is not connected,"| | |
+|:---|:---|
+|**_F´ Version_**| 2.0.0|
+|**_Affected Component_**| Health?  |
+---
+## Problem Description
+
+Based on this [discussion](https://github.com/nasa/fprime/discussions/1002), turned out we can compile and run the flight software even when the component that doesn't have a ping port are registered to `Health` is set in ping entries table in `topology.cpp`
+
+## How to Reproduce
+
+1. add a component that doesn't have a ping port attached to ping entries in `topology.cpp`
+2. compile and run it
+
+## Expected Behavior
+
+There should be no assertion until after you execute the binary file. FATAL 122 is handled slightly afterward.
+",bug,https://github.com/nasa/fprime/issues/1006
+It may be a good idea to toggle these telemetry reports on/off via commands.,"_Originally posted by @cruise2coast in https://github.com/nasa/fprime/pull/283#discussion_r533802384_
+
+It may be a good idea to toggle these telemetry reports on/off via commands. By default, these telemetry channels could be turned off and not reported to avoid constantly generating telemetry packets. When needed, these channels can be turned on for reporting via a command. This would help control telemetry packet generation/output especially in radio RF bandwidth constrained environments.
+
+https://github.com/nasa/fprime/pull/283#discussion_r533863034",non-bug,https://github.com/nasa/fprime/issues/339
+Consider simplifying the file names in assertion failure reports,"We should consider simplifying our approach to using numeric file IDs vs. string file names when reporting assertion failures. The current approach uses conditional compilation to define the assertion reporting interface in one of two different ways. This approach causes ifdefs to be scattered all over the uses of the assertion interface. These ifdefs are hard to understand and maintain. See, e.g., https://github.com/nasa/fprime/pull/1703.
+
+Instead, can we have the reporting mechanism pass a file ID and a pointer to the file name string, and let the client decide what to do (e.g., send file string or file ID to the ground)? If we did this, then instead of NO_ASSERT, FILE_ID_ASSERT, and FILENAME_ASSERT, we could just have a switch for assert on or off. If we wanted to have particular components (e.g., AssertFatalAdapter) with varying behavior (send down a string or an ID), we could add a config switch to just that component.
+
+Rationale:
+
+1. Omitting the string pointer argument may not be worth the maintenance cost, even if it’s not used. 
+
+2. Simplifying the configuration switch seems good.
+
+3. Even for applications that store or downlink the file ID, it is often useful to have the actual file name available for debugging. 
+
+If there's a concern about using the `__FILE__` string in the memory-constrained configuration, then we could keep the pointer in the interface but make it point to a dummy string in this configuration. I remember we made a similar simplification with object names. However, the system cost of passing a pointer to `__FILE__` should not be high, even in a very constrained environment.",non-bug,https://github.com/nasa/fprime/issues/1704
+Fix RPI Scripts,See #38. `runBoth.sh` has tcsh remnants that fail if BUILD_ROOT is not set in the environment.,bug,https://github.com/nasa/fprime/issues/39
+Consider introducing Long Term Support releases,"| | |
+|:---|:---|
+|**_F´ Version_**| |
+|**_Affected Component_**|  |
+---
+## Feature Description
+
+We may want to consider introducing the notion of [Long Term Support releases](https://en.wikipedia.org/wiki/Long-term_support)
+
+## Rationale
+
+More stable and usable software for users.
+",non-bug,https://github.com/nasa/fprime/issues/2329
+Comprehensive approach to requirements traceability,"| | |
+|:---|:---|
+|**_F´ Version_**| 3.x.x |
+|**_Affected Component_**| Process / Traceability / Documentation |
+---
+## Feature Description
+
+It would be interesting if F' offered a comprehensive approach to requirements traceability.
+I'm referring to a requirements management tool that allows developers to work on individual activities while linking code and verification artifacts to lower or higher level requirements.
+
+Functional safety and cybersecurity standards require the collection, referencing, and tracking of requirements.
+In the face of changing customer requirements, test failures and engineering oversights, updating these artifacts can become a logistical nightmare. Project management automation can make this process more efficient and less time consuming.
+
+The end result would be a `comprehensive two-way process` that ensures that any changes to requirements, design, or source code are easily understood, verified, and tracked throughout the life cycle.
+
+We would have system `requirements assigned to software engineering`, `high-level requirements` and `low-level requirements`.
+I would not be able to propose a technical solution. Should requirements, for example, be listed in tables in markdown files, as components are?
+
+## Rationale
+
+Many functional safety and cybersecurity standards mention requirements traceability.
+
+On the one hand, it is essential to demonstrate that all requirements are met as implemented and tested in the code.
+
+And on the other hand, it is important to demonstrate that there is code that does not meet any requirements.
+This code may be the result of feature creep, code written to make a component reusable across multiple projects, dead code, or malicious code implemented and added by unscrupulous individuals. In all cases, it is essential to provide a justification for the presence or absence of such code.
+",non-bug,https://github.com/nasa/fprime/issues/1564
+Update System Reference camera implementation based on feedback,"See comments in https://github.com/fprime-community/fprime-system-reference/pull/56 for feedback. 
+Summary:
+- Get pointers out of header so we’re not forced to include it
+- Get rid of FrameBufferAllocator
+   - Better understand libcamera memory management
+- Need to look into mallocator vs BufferManager
+- Keep track of captureImage opcode, cmd sequence, command states since we'll want to callback into the component
+- Create a sequence diagram and SDD
+   - Framer and deframer (defamer is probably a better reference) for SDD reference
+",non-bug,https://github.com/nasa/fprime/issues/2266
+IntervalTimer shouldn't directly use OS clock,"| | |
+|:---|:---|
+|**_F´ Version_**| all |
+|**_Affected Component_**| OS |
+---
+
+## Rationale
+
+Right now, the IntervalTimer class directly uses the system clock to track the duration between start and stop.
+It should use the spacecraft time that F' provides. This will likely require some rearchitecting because currently spacecraft time is currently provided via a port call. Because ports cannot be called outside of a component, we need to provide some way for standalone classes like the IntervalTimer to access the spacecraft time.
+",non-bug,https://github.com/nasa/fprime/issues/863
+Sequence compile dumps strange text,"When I try to run the sequencer, I get the following strange output:
+
+```
+fprime-seqgen -d Ref/build-artifacts/Linux/dict/RefTopologyAppDictionary.xml -t 0xFF Svc/CmdSequencer/samples/no-op.fseq 
+Sequence is 38 bytes with timebase b'\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+CRC: 1900887092 (0x714D3C34)
+```
+",bug,https://github.com/nasa/fprime/issues/1907
+Refactor Assert Handler Logging,"Right now the assert handler prints to stderr, not the default F' logging class.
+It also calls snprintf, which embedded targets may want to avoid
+",non-bug,https://github.com/nasa/fprime/issues/887
+Add file stat command to Svc::FileManager,"It is useful to be able to get the size of individual files in a directory since the file list command is limited in the number of files that can be listed. Add a command that takes the file name and issues and event with the size for that file.
+",bug,https://github.com/nasa/fprime/issues/505
+LinuxUartDriver Does Not Work With Com Stub,"| | |
+|:---|:---|
+|**_F´ Version_**| |
+|**_Affected Component_**|   |
+---
+## Problem Description
+
+Com stub expects connected drivers to have the following behavior:
+
+1.  Reconnection on failure
+2. Send all bytes or emit retr
+
+LinuxUartDriver has no reconnection logic and retries mascaraed as errors.  It also only attempts to send once rather than looping through bytes.
+",bug,https://github.com/nasa/fprime/issues/2702
+Seg Fault While Running Unit Test,"| | |
+|:---|:---|
+|**_F´ Version_**| 3.3.3|
+|**_Affected Component_**|  Unit Testing |
+---
+## Problem Description
+
+A description of the problem with sufficient detail to understand the issue.
+
+Ran into a seg fault while attempting to run the Unit Tests of the LED Blinker workshop. 
+
+
+Output when running prime-unit check 
+> 0% tests passed, 1 tests failed out of 1
+> 
+> Total Test time (real) =   0.29 sec
+> 
+> The following tests FAILED:
+> 	  1 - Components_Led_ut_exe (SEGFAULT)
+
+
+Output from lldb
+
+> (other-venv) $ lldb ../../build-fprime-automatic-native-ut/bin/Darwin/Components_Led_ut_exe 
+> (lldb) target create ""../../build-fprime-automatic-native-ut/bin/Darwin/Components_Led_ut_exe""
+> Current executable set to '.../workshop/build-fprime-automatic-native-ut/bin/Darwin/Components_Led_ut_exe' (x86_64).
+> (lldb) run
+> Process 25141 launched: '.../workshop/build-fprime-automatic-native-ut/bin/Darwin/Components_Led_ut_exe' (x86_64)
+> Process 25141 stopped
+> * thread # 1, stop reason = EXC_BAD_ACCESS (code=1, address=0x7ff800000000)
+>     frame #0: 0x0000000100eb696c dyld
+> ->  0x100eb696c: movl   (%rax), %edx
+>     0x100eb696e: andl   $-0x2, %edx
+>     0x100eb6971: cmpl   $0xfeedface, %edx         ; imm = 0xFEEDFACE 
+>     0x100eb6977: jne    0x100eb6930
+> Target 0: (Components_Led_ut_exe) stopped.
+> (lldb) bt
+> * thread # 1, stop reason = EXC_BAD_ACCESS (code=1, address=0x7ff800000000)
+
+@LeStarch  said it's due to an incompatibility in my GCC version. He commented out the sanitizers in fprime and it compiled correctly 
+>(other-venv) $ gcc --version
+>Configured with: --prefix=/Library/Developer/CommandLineTools/usr --with-gxx-include-dir=/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/c++/4.2.1
+> Apple clang version 12.0.0 (clang-1200.0.32.28)
+> Target: x86_64-apple-darwin22.6.0
+> Thread model: posix
+> InstalledDir: /Library/Developer/CommandLineTools/usr/bin
+
+",bug,https://github.com/nasa/fprime/issues/2326
+Build fails after creating a new deployment,"| | |
+|:---|:---|
+|**_F´ Version_**|3.4.3 |
+|**_Affected Component_**|  |
+---
+## Problem Description
+
+I ran into this issue when going through the HelloWorld tutorial. After creating a deployment, the build fails:
+
+```
+[sub-build] Failed to execute: info-cache/fpp_locs:
+
+  fpp-locate-defs
+
+  /home/ryan/fprime/HelloWorld/MyDeployment/Top/topology.fpp:85.39
+
+        comStub.drvDataOut -> comDriver.send
+                                        ^
+
+  error: identifier expected
+
+  gmake[4]: *** [CMakeFiles/fpp_locs.dir/build.make:74: ../locs.fpp] Error 1
+
+  gmake[3]: *** [CMakeFiles/Makefile2:1920: CMakeFiles/fpp_locs.dir/all]
+  Error 2
+
+  gmake[2]: *** [CMakeFiles/Makefile2:1927: CMakeFiles/fpp_locs.dir/rule]
+  Error 2
+
+  gmake[1]: *** [Makefile:124: fpp_locs] Error 2
+```
+
+Reverting the changes in requirements.txt from commit c6f8e7b resolved the issue for me.
+
+## Context / Environment
+
+```
+Operating System: Linux
+CPU Architecture: aarch64
+Platform: Linux-5.15.0-1046-raspi-aarch64-with-glibc2.35
+Python version: 3.10.12
+CMake version: 3.22.1
+Pip version: 24.0
+Pip packages:
+    fprime-tools==3.4.3
+    fprime-gds==3.4.3
+    fprime-fpp-*==2.1.0a3
+```
+
+## How to Reproduce
+
+1. Run `fprime-util new --deployment` and select defaults
+2. Run `fprime-util build -j4`
+3. Build fails with above error.
+
+## Expected Behavior
+
+Build passes.
+",bug,https://github.com/nasa/fprime/issues/2533
+Possible improvements to Math tutorial,"| | |
+|:---|:---|
+|**_F´ Version_**| 2.0.0 |
+|**_Affected Component_**| Math Component Tutorial |
+---
+## Feature Description
+
+One of the last sections of the Math Component tutorial (4.1.8.1 Setting the Parameter Value) is missing some examples or possibly graphics.  These sentences are incomplete:
+
+- The FACTOR1_PRM_SET command can be sent to the software:
+- The notification function that was implemented as part of the tutorial will send an event indicating the value was updated:
+- The MS_DO_MATH command can now be executed with the new value:
+- The MathReceiver component sends the events with the new result:
+- The new result is 1.0 with the new value of factor2. The ""Channel Telemetry"" tab also shows the new values:
+
+I figured it out, but you may want to fix this.
+
+Also, in section 4.1.8.2 Saving the Parameter Value, we are saving the value of FACTOR2, not FACTOR1.  But the corresponding variable (factor2) does not get used anywhere in the generated C++ code.  I would think that saving factor1 to the parameter database makes more sense.  If that's left as an exercise for the reader, then you might want to state so.
+
+## Rationale
+
+The tutorial will make more sense to new users with these changes.
+",non-bug,https://github.com/nasa/fprime/issues/1108
+Broken links 404 in several .md files,"1. https://github.com/nasa/fprime/blob/e165c914b0d0240eba8164c52f8856ce90bee3dc/docs/UsersGuide/gds/seqgen.md
+link simple_sequence.seq is broken
+
+2. https://github.com/nasa/fprime/blob/e165c914b0d0240eba8164c52f8856ce90bee3dc/docs/UsersGuide/cmake/cmake-platforms.md link fprime Platform Template is broken
+
+3. https://github.com/nasa/fprime/blob/e165c914b0d0240eba8164c52f8856ce90bee3dc/docs/UsersGuide/cmake/cmake-toolchains.md link fprime Platform Template is broken",bug,https://github.com/nasa/fprime/issues/830
+Load and Go Sequences,"| | |
+|:---|:---|
+|**_F´ Version_**| |
+|**_Affected Component_**|  CmdSequencer |
+---
+## Feature Description
+
+Implement Load and Go Sequences.  These are sequences that can run as soon as they are loaded onto the filesystem.
+
+## Rationale
+
+Used on large flagship missions and was also requested by system engineers on CADRE.
+",non-bug,https://github.com/nasa/fprime/issues/2211
+Improvements to fprime-bootstrap,"| | |
+|:---|:---|
+|**_F´ Version_**| fprime-bootstrap v1.1.0 |
+|**_Affected Component_**|  |
+---
+## Feature Description
+
+- [x] the GitHub API has rate limits, meaning some machines can be blocked out from making requests if there has been too many requests from the same network. We should find a workaround if the rate limit error occurs, e.g. using `git ls-remote ....`
+- [x] error our if dangerous characters are present in parent directories, such as spaces, single and double quotes, as this will lead to errors in the build down the road (fix #2558)
+- [ ] _**EDIT**: Will not implement this one, see comment below._ 
+error out if projects is being created in a symlinked directory, as this will lead to errors in the build system down the road.
+- [ ] _**EDIT**: this one may introduce more issues than it will fix, and will therefore also not be implemented_ 
+fix https://github.com/nasa/fprime/issues/2566
+
+Grouping these as they are all pretty low-hanging fruits, should result in a new release once all those are implemented.
+",non-bug,https://github.com/nasa/fprime/issues/2570
+Buffer Management Guide,"| | |
+|:---|:---|
+|**_F´ Version_**| |
+|**_Affected Component_**|  |
+---
+## Feature Description
+
+Need a guide for managing buffers.",non-bug,https://github.com/nasa/fprime/issues/1176
+Add Visulazation Script,"| | |
+|:---|:---|
+|**_F´ Version_**| |
+|**_Affected Component_**|  |
+---
+## Feature Description
+
+Runs visualizer setup commands and visualizer.",non-bug,https://github.com/nasa/fprime/issues/2059
+Include reference implementation for concepts mentioned in Porting Guide,"| | |
+|:---|:---|
+|**_F´ Version_**| v3.0.0 |
+|**_Affected Component_**|  |
+---
+## Feature Description
+
+As a follow-up to https://github.com/nasa/fprime/issues/76, the [Porting Guide](https://nasa.github.io/fprime/UsersGuide/dev/porting-guide.html) should include a reference implementation for the concepts mentioned in the guide, i.e.,
+
+1) CMake Toolchain and F´ platform files
+2) Fw::Types and configuration
+3) Hardware drivers
+4) OSAL support
+
+## Rationale
+
+As to provide a working example of how these concepts should be implemented",non-bug,https://github.com/nasa/fprime/issues/1487
+Reassess process for adding/editing constants defined in config folder,"| | |
+|:---|:---|
+|**_F´ Version_**|3.0+|
+|**_Affected Component_**| N/A  |
+---
+## Problem Description
+
+For repo's using fprime as a submodule, users will need to copy the config folder into their deployment folder and point the `config_directory` item in the `settings.ini` file to the new config folder. Users should then be able to add constants to the AcConstants.ini or AcConstants.fpp file. However, this process does not work(see discussion here: #1555).
+
+Some things that can be improved
+1. Remove the need for BOTH the AcConstants.ini and AcConstants.fpp files, as they seem redundant. 
+2. Allow users to add custom constants to the `AcConstants` file so that they can be referenced in their custom components. 
+3. Allow users to edit the values of the constants that already exist in the `AcConstants` file. 
+
+## How to Reproduce
+
+1. Add fprime as a submodule to your repository
+2. Copy the config folder within the fprime repo into your deployment directory
+3. Edit the `config_directory` item in the `settings.ini` file to the path of the new config folder
+4. Add a custom constant to the `AcConstants.fpp` or `AcConstants.ini` files/or change the value of a constant in those file
+5. Generate and build deployment
+6. Check build directory and check the `FppConstantsAc.hpp` file, the changes made in Step 4 will not be there. 
+
+## Expected Behavior
+
+The expected behavior should be for users to add or edit constants in the AcConstants.fpp/.ini file and have those changes be applied during the build of their deployment. 
+
+An even better solution would be to avoid having users copy the fprime config folder into their deployment at all. In this case, users would still have a config folder in their deployment directory, but it would only contain any new .hpp files they need for their new components and an AcConstants.fpp file that ONLY contains new constants or existing constants with edited values. The fprime build system would then have to check both config folders and use that for the build. Any constants that are defined twice would default to the user configured value. ",bug,https://github.com/nasa/fprime/issues/1579
+fprime-util check --coverage fails,"| | |
+|:---|:---|
+|**_F´ Version_**| 7e20febd34019c730da1358567e7a512592de4d8|
+|**_Affected Component_**| Code Coverage  |
+---
+## Problem Description
+
+When running code coverage, it fails with the following
+
+```
+100% tests passed, 0 tests failed out of 1
+
+Total Test time (real) =   0.31 sec
+[100%] Built target Libraries_Util_check
+/home/.../Libraries_Util.dir/AtomicUtil.gcno:cannot open notes file
+/home/.../Libraries_Util.dir/AtomicUtil.gcda:cannot open data file, assuming not executed
+/home/.../Libraries_Util.dir/Util.gcno:cannot open notes file
+/home/.../Libraries_Util.dir/Util.gcda:cannot open data file, assuming not executed
+/home/.../Libraries_Util.dir/BitUtil.gcno:cannot open notes file
+/home/.../Libraries_Util.dir/BitUtil.gcda:cannot open data file, assuming not executed
+Error copying file ""*.gcov"" to ""/home/.../Libraries/Util/coverage"".
+make[3]: *** [Libraries/Util/CMakeFiles/Libraries_Util_coverage.dir/build.make:72: Libraries/Util/CMakeFiles/Libraries_Util_coverage] Error 1
+make[2]: *** [CMakeFiles/Makefile2:32568: Libraries/Util/CMakeFiles/Libraries_Util_coverage.dir/all] Error 2
+make[1]: *** [CMakeFiles/Makefile2:32575: Libraries/Util/CMakeFiles/Libraries_Util_coverage.dir/rule] Error 2
+make: *** [Makefile:12204: Libraries_Util_coverage] Error 2
+[ERROR] CMake erred with return code 2
+```
+
+## How to Reproduce
+
+1. fprime-util check --coverage
+
+
+## Expected Behavior
+
+I expected the coverage files to be generated and in the coverage directory.
+",bug,https://github.com/nasa/fprime/issues/1248
+JAR Packages Are Broken as-of v3.4.0,"| | |
+|:---|:---|
+|**_F´ Version_**| |
+|**_Affected Component_**|   |
+---
+## Problem Description
+
+Version v3.4.0 ships with broken JAR packages.  Only the JAR files are included, not the wrapper scripts.  This must be fixed.",bug,https://github.com/nasa/fprime/issues/2422
+Devel Failing Check --all,"| | |
+|:---|:---|
+|**_F´ Version_**| devel |
+|**_Affected Component_**|   |
+---
+## Problem Description
+
+Devel seems to be failing check all since yesterday.  Investigating.",bug,https://github.com/nasa/fprime/issues/525
+Parameters Take-Up Lots of Program Space,Parameters take up a lot of program memory.  Can this be reduced?,non-bug,https://github.com/nasa/fprime/issues/221
+Consider having `Fw::Buffer::getSerializeRepr` return an object instead of a reference,"`Fw::Buffer::getSerializeRepr` currently returns a reference into a serialize buffer stored as a member of `Fw::Buffer`. There are some issues with this:
+
+1. When you call `getSerializeRepr`, you're not sure what state the serialize buffer is in. It depends on what has previously been done with the buffer.
+2. The serialize representation state is reset when the buffer object is serialized and deserialized but otherwise persists. This could be an unexpected behavior.
+3. Performing deserialize operations on the buffer updates the serialize buffer and therefore updates the `Fw::Buffer`. It would be better for the`Fw::Buffer` to be read-only in this case.
+
+Instead we could have `getSerializeRepr` return an object, say `Fw::ExternalSerializeBufferWithMemberCopy`. That way the user would own the serialize representation, and it could be freshly initialized each time it is requested. An argument to `getSerializeRepr` could specify whether the representation is for serialization (in which case the internal serial pointer should be set to zero) or deserialization (in which case the internal serial pointer should be set to the end of the data). Access to the buffer for deserialization would be read-only.",non-bug,https://github.com/nasa/fprime/issues/2714
+PolyDb Updates to queue measurements,"| | |
+|:---|:---|
+|**_F´ Version_**| |
+|**_Affected Component_**|  PolyDb |
+---
+## Feature Description
+
+Ability to store a queue of data for each measurement and dump those queues on request 
+
+## Rationale
+
+We used this type of functionality to dump the history of EHA as part of system responses or ground command.  It helps operators debug anomalies and faults, as EHA can get dropped or not received on the ground at a high enough rate (for a variety for reasons).  Obviously PolyDb is not the back-end for telemetry in F-prime, but I hope we re-think that one day.  Regardless this is a handy feature for debugging anomalies, testing, etc when your downlink bandwidth or packetization rate is limited.
+",non-bug,https://github.com/nasa/fprime/issues/2222
+Create spec/SDD of FPP Dictionary JSON format,"| | |
+|:---|:---|
+|**_F´ Version_**| |
+|**_Affected Component_**|  |
+---
+## Feature Description
+For the 2nd point in #2263, we'll need:
+- Create spec/SDD of JSON format
+- Tighten up the FPP spec
+- Ensure that we have a complete representation of FPP model elements in JSON
+   - Current fprime dictionary is not complete, example: format of enum has changed and now there is ""serializable""
+- Have to make sure we go through all FPP model elements and account for them in the JSON / complete representation in JSON. Need to figure out what we need/want to exclude
+
+",non-bug,https://github.com/nasa/fprime/issues/2275
+GDS Fails To Launch With Unknown Types In Dictionary,"| | |
+|:---|:---|
+|**_F´ Version_**| all |
+
+---
+## Problem Description
+
+The GDS crashes on launch when provided with a dictionary containing references to a handcoded type. See: https://github.com/nasa/fprime/discussions/1643#discussioncomment-3484767
+
+This may also apply to other complicated types like serlizables.
+
+## Expected Behavior
+
+Instead of failing to launch, the GDS should launch but warn that it's unable to deserialize EVRs referencing the handcoded type. 
+",bug,https://github.com/nasa/fprime/issues/2230
+Add command  XML comment field to GDS,"| | |
+|:---|:---|
+|**_F´ Version_**| |
+|**_Affected Component_**|  |
+---
+## Feature Description
+
+As a way to help users understand the functionality of a particular command it would be nice to add the text from the commands XML <comment> field to the GDS interface. 
+
+Example:
+A command entry like this:
+```
+<command kind=""guarded"" opcode=""3"" mnemonic=""xHWx_FREQUENCY"">
+    <comment>
+        Set the excitation frequency, specified in kHz, 100kHz to 1000kHz
+    </comment>
+    <args>
+        <arg type=""F32"" name=""freq""> </arg>
+    </args>
+</command>
+```
+Would generate something like this:
+![image](https://user-images.githubusercontent.com/2592986/117730330-07952d00-b1a1-11eb-9a52-bfaa248c7253.png)
+
+
+## Rationale
+
+A rationale for why the feature should be implemented in F´.
+
+Gives the user a better understanding of the commands they are sending. 
+",non-bug,https://github.com/nasa/fprime/issues/535
+Standard F´ Version,"| | |
+|:---|:---|
+|**_F´ Version_**| |
+|**_Affected Component_**|   |
+---
+## Problem Description
+
+F´ dictionary vs FPrime version (Sys Res) all use different versions.  This should be fixed.
+
+Recommend standard `git descrive --tag --always`",bug,https://github.com/nasa/fprime/issues/1247
+Run CMake UT CI On Minimum Required CMake Version,"| | |
+|:---|:---|
+|**_F´ Version_**| |
+|**_Affected Component_**|  |
+---
+## Feature Description
+
+When running. the CMake UTs, we should run them on the minimum CMake version to ensure that version isn't inadvertently broken.",non-bug,https://github.com/nasa/fprime/issues/2618
+GDS: Double Click Repopulation Not Working,"| | |
+|:---|:---|
+|**_F´ Version_**| 1.5.3/devel |
+|**_Affected Component_**|  GDS GUI  |
+---
+## Problem Description
+
+Double clicking on commands in the command history should repopulate the command-send box.
+
+## How to Reproduce
+
+1.  Run GDS/GUI with Ref
+2. Send command NO-OP STRING with string arg
+3. Send command NO-OP without string
+4. Double click on the command history entry for NO-OP-STRING.
+5. It **should** repopulate the send box.
+
+## Expected Behavior
+
+Double clicking on a command hisotry item should repopulate the command send box with that command.
+",bug,https://github.com/nasa/fprime/issues/519
+Multiple definition of `Os::IntervalTimer::IntervalTimer()` on Baremetal,"| | |
+|:---|:---|
+|**_F´ Version_**| [d177bb7](https://github.com/nasa/fprime/commit/d177bb7ef91f0b00ac805a0414e793bcfa053da2)|
+|**_Affected Component_**|   Baremetal Os::IntervalTimer |
+---
+## Problem Description
+
+When building for baremetal, using `Os::IntervalTimer` generates these types of errors:
+
+multiple definition of `Os::IntervalTimer::~IntervalTimer()` 
+multiple definition of `Os::IntervalTimer::IntervalTimer()`
+
+## How to Reproduce
+
+1. Include <Os/IntervalTimer.hpp>
+2. Instantiate an Os::IntervalTimer variable
+3. Compile with bare metal
+
+## Expected Behavior
+
+I expect to successfully compile. 
+",bug,https://github.com/nasa/fprime/issues/1845
+Fw Buffer Issue Fatal 141,"| | |
+|:---|:---|
+|**_F´ Version NASA_v1.5.3**| |
+|**_Affected Component_**|   |
+---
+# Problem Description
+
+Application fails when starting the event logger in `Topology.cpp`
+`eventLogger.start(0,98,10*1024);`
+
+```
+   Svc::ActiveLoggerImpl eventLogger(FW_OPTIONAL_NAME(""ELOG""));
+...
+   eventLogger.init(10,0); 
+... 
+    // Active component startup
+    // start rate groups
+    rateGroup1.start(0, 121,10 * 1024);
+    rateGroup2.start(1, 120,10 * 1024);
+    rateGroup3.start(2, 119,10 * 1024);
+    rateGroup4.start(3, 118,10 * 1024);
+    // start driver
+    blockDrv.start(0,140,10*1024);
+    // start dispatcher
+    cmdDisp.start(0,101,10*1024);
+    // start sequencer
+    cmdSeq.start(0,100,10*1024);
+    // start telemetry
+    eventLogger.start(0,98,10*1024);      //<==================Fails here
+    chanTlm.start(0,97,10*1024);
+    prmDb.start(0,96,10*1024);
+    fileDownlink.start(0, 100, 10*1024);
+    fileUplink.start(0, 100, 10*1024);
+    fileManager.start(0, 100, 10*1024);
+    pingRcvr.start(0, 100, 10*1024);       //<==================Would also fail here if eventLogger is commented out
+...
+```
+If ""eventLogger.start(0,98,10*1024)"" is commented out, the same error appears at pingRcvr.start(0, 100, 10*1024);.
+
+## Error message
+`build-fprime-automatic-native/F-Prime/Fw/Buffer/FATAL 141 handled.`
+Do you have any idea what this buffer error is referring to?
+
+# Problem trace
+Fprime/Os/Posix/Task.cpp failing in:
+stat = pthread_create(tid,&att,(pthread_func_ptr)routine,arg);
+
+Variables:
+![image](https://user-images.githubusercontent.com/16116085/135592022-327eda13-ae98-4de0-a369-aa3076f7c185.png)
+___
+
+Called in Fprime/Fw/Comp/ActiveComponentBase.cpp by: 
+Os::Task::TaskStatus status = this->m_task.start(taskName, identifier, priority, stackSize, this->s_baseTask, this, cpuAffinity);
+
+`task_name = ""ELOG\0""` as expected
+Variables:
+![image](https://user-images.githubusercontent.com/16116085/135592349-639d3dfe-9874-478b-a88c-524242a8b247.png)
+
+___
+
+
+
+## Buffer configuration
+Fprime/config/FpConfig.hpp:
+```
+/**
+ * \file
+ * \author T. Canham
+ * \brief ISF configuration file
+ *
+ * \copyright
+ * Copyright 2009-2015, by the California Institute of Technology.
+ * ALL RIGHTS RESERVED.  United States Government Sponsorship
+ * acknowledged.
+ * <br /><br />
+ */
+#ifndef _FW_CONFIG_HPP_
+#define _FW_CONFIG_HPP_
+
+// A helper macro to declare errors in definitions of the constants
+#define FW_CONFIG_ERROR( condition, name )\
+    typedef char assert_failed_ ## name [ (condition) ? 1 : -1 ];
+
+// To enable various facilities, set the below to 0 or 1. If it is set in compiler flags,
+// these defaults will be overridden
+
+// Available types
+
+#ifndef FW_HAS_64_BIT
+#define FW_HAS_64_BIT                       1  //!< Architecture supports 64 bit integers
+#endif
+
+#ifndef FW_HAS_32_BIT
+#define FW_HAS_32_BIT                       1  //!< Architecture supports 32 bit integers
+#endif
+
+#ifndef FW_HAS_16_BIT
+#define FW_HAS_16_BIT                       1  //!< Architecture supports 16 bit integers
+#endif
+
+#ifndef FW_HAS_F64
+#define FW_HAS_F64                          1  //!< Architecture supports 64 bit floating point numbers
+#endif
+
+// Boolean values for serialization
+
+#ifndef FW_SERIALIZE_TRUE_VALUE
+#define FW_SERIALIZE_TRUE_VALUE             (0xFF)  //!< Value encoded during serialization for boolean true
+#endif
+
+#ifndef FW_SERIALIZE_FALSE_VALUE
+#define FW_SERIALIZE_FALSE_VALUE             (0x00) //!< Value encoded during serialization for boolean false
+#endif
+
+#ifndef AssertArg
+#define AssertArg U32
+#endif
+
+// typedefs for various serialization items
+// *** NOTE *** Changes here MUST match GSE in order to decode the values correctly
+
+#ifndef FwPacketDescriptorType
+#define FwPacketDescriptorType U32          //!< Type representation for a packet descriptor
+#endif
+
+#ifndef FwOpcodeType
+#define FwOpcodeType U32                    //!< Type representation for a command opcode
+#endif
+
+#ifndef FwChanIdType
+#define FwChanIdType U32                    //!< Type representation for a channel id
+#endif
+
+#ifndef FwEventIdType
+#define FwEventIdType U32                   //!< Type representation for a event id
+#endif
+
+#ifndef FwPrmIdType
+#define FwPrmIdType U32                     //!< Type representation for a parameter id
+#endif
+
+// How big the size of a buffer (or string) representation is
+#ifndef FwBuffSizeType
+#define FwBuffSizeType U16                  //!< Type representation for storing a buffer or string size
+#endif
+
+// How many bits are used to store an enumeration defined in XML during serialization.
+#ifndef FwEnumStoreType
+#define FwEnumStoreType I32                 //!< Type representation for an enumeration value
+#endif
+
+// Object facilities
+
+// Allow objects to have names. Allocates storage for each instance
+#ifndef FW_OBJECT_NAMES
+#define FW_OBJECT_NAMES                     1   //!< Indicates whether or not object names are stored (more memory, can be used for tracking objects)
+#endif
+
+// To reduce binary size, FW_OPTIONAL_NAME(<string>) can be used to subsitute strings with an empty string
+// when running with FW_OBJECT_NAMES disabled
+#if FW_OBJECT_NAMES == 1
+ #define FW_OPTIONAL_NAME(name) name
+#else
+ #define FW_OPTIONAL_NAME(name) """"
+#endif
+
+// Add methods to query an object about its name. Can be overridden by derived classes
+// For FW_OBJECT_TO_STRING to work, FW_OBJECT_NAMES must be enabled
+#if FW_OBJECT_NAMES == 1
+ #ifndef FW_OBJECT_TO_STRING
+ #define FW_OBJECT_TO_STRING                1   //!< Indicates whether or not generated objects have toString() methods to dump internals (more code)
+ #endif
+#else
+ #define FW_OBJECT_TO_STRING                0
+#endif
+
+// Adds the ability for all component related objects to register
+// centrally.
+#ifndef FW_OBJECT_REGISTRATION
+#define FW_OBJECT_REGISTRATION              1   //!< Indicates whether or not objects can register themselves (more code, more object tracking)
+#endif
+
+#ifndef FW_QUEUE_REGISTRATION
+#define FW_QUEUE_REGISTRATION               1   //!< Indicates whether or not queue registration is used
+#endif
+
+#ifndef FW_BAREMETAL_SCHEDULER
+#define FW_BAREMETAL_SCHEDULER             0   //!< Indicates whether or not a baremetal scheduler should be used. Alternatively the Os scheduler is used.
+#endif
+
+// Port Facilities
+
+// This allows tracing calls through ports for debugging
+#ifndef FW_PORT_TRACING
+#define FW_PORT_TRACING                     1   //!< Indicates whether port calls are traced (more code, more visibility into execution)
+#endif
+
+// This generates code to connect to serialized ports
+#ifndef FW_PORT_SERIALIZATION
+#define FW_PORT_SERIALIZATION               1   //!< Indicates whether there is code in ports to serialize the call (more code, but ability to serialize calls for multi-note systems)
+#endif
+
+// Component Facilities
+
+// Serialization
+
+// Add a type id when serialization is done. More storage,
+// but better detection of errors
+// TODO: Not working yet
+
+#ifndef FW_SERIALIZATION_TYPE_ID
+#define FW_SERIALIZATION_TYPE_ID            0   //!< Indicates if type id is stored when type is serialized. (More storage, but more type safety)
+#endif
+
+// Number of bytes to use for serialization IDs. More
+// bytes is more storage, but greater number of IDs
+#if FW_SERIALIZATION_TYPE_ID
+ #ifndef FW_SERIALIZATION_TYPE_ID_BYTES
+ #define FW_SERIALIZATION_TYPE_ID_BYTES      4  //!< Number of bytes used to represent type id - more bytes, more ids
+ #endif
+#endif
+
+// Turn asserts on or off
+
+#define FW_NO_ASSERT                        1   //!< Asserts turned off
+#define FW_FILEID_ASSERT                    2   //!< File ID used - requires -DASSERT_FILE_ID=<somevalue> to be set on the compile command line
+#define FW_FILENAME_ASSERT                  3   //!< Uses the file name in the assert - image stores filenames
+
+#ifndef FW_ASSERT_LEVEL
+#define FW_ASSERT_LEVEL                     FW_FILENAME_ASSERT //!< Defines the type of assert used
+#endif
+
+// Define max length of assert string
+#ifndef FW_ASSERT_TEXT_SIZE
+#define FW_ASSERT_TEXT_SIZE                 120  //!< Size of string used to store assert description
+#endif
+
+// Adjust various configuration parameters in the architecture. Some of the above enables may disable some of the values
+
+// The size of the object name stored in the object base class. Larger names will be truncated.
+#if FW_OBJECT_NAMES
+ #ifndef FW_OBJ_NAME_MAX_SIZE
+ #define FW_OBJ_NAME_MAX_SIZE                80  //!< Size of object name (if object names enabled). AC Limits to 80, truncation occurs above 80.
+ #endif
+#endif
+
+// When querying an object as to an object-specific description, this specifies the size of the buffer to store the description.
+#if FW_OBJECT_TO_STRING
+ #ifndef FW_OBJ_TO_STRING_BUFFER_SIZE
+ #define FW_OBJ_TO_STRING_BUFFER_SIZE        255  //!< Size of string storing toString() text
+ #endif
+#endif
+
+#if FW_OBJECT_REGISTRATION
+// For the simple object registry provided with the framework, this specifies how many objects the registry will store.
+ #ifndef FW_OBJ_SIMPLE_REG_ENTRIES
+ #define FW_OBJ_SIMPLE_REG_ENTRIES           5000  //!< Number of objects stored in simple object registry
+ #endif
+// When dumping the contents of the registry, this specifies the size of the buffer used to store object names. Should be >= FW_OBJ_NAME_MAX_SIZE.
+ #ifndef FW_OBJ_SIMPLE_REG_BUFF_SIZE
+ #define FW_OBJ_SIMPLE_REG_BUFF_SIZE         255  //!< Size of ojbect registry dump string
+ #endif
+#endif
+
+#if FW_QUEUE_REGISTRATION
+// For the simple queue registry provided with the framework, this specifies how many queues the registry will store.
+ #ifndef FW_QUEUE_SIMPLE_QUEUE_ENTRIES
+ #define FW_QUEUE_SIMPLE_QUEUE_ENTRIES           100  //!< Number of queues stored in simple queue registry
+ #endif
+#endif
+
+
+// Specifies the size of the string holding the queue name for queues
+#ifndef FW_QUEUE_NAME_MAX_SIZE
+#define FW_QUEUE_NAME_MAX_SIZE               80   //!< Max size of message queue name
+#endif
+
+// Specifies the size of the string holding the task name for active components and tasks
+#ifndef FW_TASK_NAME_MAX_SIZE
+#define FW_TASK_NAME_MAX_SIZE               80    //!< Max size of task name
+#endif
+
+// Specifies the size of the buffer that contains a communications packet.
+#ifndef FW_COM_BUFFER_MAX_SIZE
+#define FW_COM_BUFFER_MAX_SIZE               128   //!< Max size of Fw::Com buffer
+#endif
+
+// Specifies the size of the buffer that contains the serialized command arguments.
+
+#ifndef FW_CMD_ARG_BUFFER_MAX_SIZE
+#define FW_CMD_ARG_BUFFER_MAX_SIZE           (FW_COM_BUFFER_MAX_SIZE - sizeof(FwOpcodeType) - sizeof(FwPacketDescriptorType))
+#endif
+
+// Specifies the maximum size of a string in a command argument
+#ifndef FW_CMD_STRING_MAX_SIZE
+#define FW_CMD_STRING_MAX_SIZE           40   //!< Max character size of command string arguments
+#endif
+
+// Normally when a command is deserialized, the handler checks to see if there any any leftover
+// bytes in the buffer. If there are, it assumes that the command was corrupted somehow since
+// the serialized size should match the serialized size of the argument list. In some cases,
+// command buffers are padded so the data can be larger than the serialized size of the command.
+// Setting the below to zero will disable the check at the cost of not detecting commands that
+// are too large.
+#ifndef FW_CMD_CHECK_RESIDUAL
+#define FW_CMD_CHECK_RESIDUAL               1 //!< Check for leftover command bytes
+#endif
+
+// Specifies the size of the buffer that contains the serialized log arguments.
+#ifndef FW_LOG_BUFFER_MAX_SIZE
+#define FW_LOG_BUFFER_MAX_SIZE               (FW_COM_BUFFER_MAX_SIZE - sizeof(FwEventIdType) - sizeof(FwPacketDescriptorType))
+#endif
+
+// Specifies the maximum size of a string in a log event
+#ifndef FW_LOG_STRING_MAX_SIZE
+#define FW_LOG_STRING_MAX_SIZE           100   //!< Max size of log string parameter type
+#endif
+
+// Specifies the size of the buffer that contains the serialized telemetry value.
+#ifndef FW_TLM_BUFFER_MAX_SIZE
+#define FW_TLM_BUFFER_MAX_SIZE               (FW_COM_BUFFER_MAX_SIZE - sizeof(FwChanIdType) - sizeof(FwPacketDescriptorType))
+#endif
+
+// Specifies the maximum size of a string in a telemetry channel
+#ifndef FW_TLM_STRING_MAX_SIZE
+#define FW_TLM_STRING_MAX_SIZE           40  //!< Max size of channelized telemetry string type
+#endif
+
+// Specifies the size of the buffer that contains the serialized parameter value.
+#ifndef FW_PARAM_BUFFER_MAX_SIZE
+#define FW_PARAM_BUFFER_MAX_SIZE             (FW_COM_BUFFER_MAX_SIZE - sizeof(FwPrmIdType) - sizeof(FwPacketDescriptorType))
+#endif
+
+// Specifies the maximum size of a string in a parameter
+#ifndef FW_PARAM_STRING_MAX_SIZE
+#define FW_PARAM_STRING_MAX_SIZE           40  //!< Max size of parameter string type
+#endif
+
+// Specifies the maximum size of a file upload chunk
+#ifndef FW_FILE_BUFFER_MAX_SIZE
+#define FW_FILE_BUFFER_MAX_SIZE             255   //!< Max size of file buffer (i.e. chunk of file)
+#endif
+
+// Specifies the maximum size of a string in an interface call
+#ifndef FW_INTERNAL_INTERFACE_STRING_MAX_SIZE
+#define FW_INTERNAL_INTERFACE_STRING_MAX_SIZE           256   //!< Max size of interface string parameter type
+#endif
+
+// enables text logging of events as well as data logging. Adds a second logging port for text output.
+#ifndef FW_ENABLE_TEXT_LOGGING
+#define FW_ENABLE_TEXT_LOGGING				 1    //!< Indicates whether text logging is turned on
+#endif
+
+ // Define the size of the text log string buffer. Should be large enough for format string and arguments
+#ifndef FW_LOG_TEXT_BUFFER_SIZE
+#define FW_LOG_TEXT_BUFFER_SIZE              256   //!< Max size of string for text log message
+#endif
+
+// Define if serializables have toString() method. Turning off will save code space and
+// string constants. Must be enabled if text logging enabled
+#ifndef FW_SERIALIZABLE_TO_STRING
+#define FW_SERIALIZABLE_TO_STRING			1    //!< Indicates if autocoded serializables have toString() methods
+#endif
+
+#if FW_SERIALIZABLE_TO_STRING
+#ifndef FW_SERIALIZABLE_TO_STRING_BUFFER_SIZE
+#define FW_SERIALIZABLE_TO_STRING_BUFFER_SIZE 255   //!< Size of string to store toString() string output
+#endif
+#endif
+
+// Define if arrays have toString() method.
+#ifndef FW_ARRAY_TO_STRING
+#define FW_ARRAY_TO_STRING                  1   //!< Indicates if autocoded arrays have toString() methods
+#endif
+
+#if FW_ARRAY_TO_STRING
+#ifndef FW_ARRAY_TO_STRING_BUFFER_SIZE
+#define FW_ARRAY_TO_STRING_BUFFER_SIZE 256  //!< Size of string to store toString() string output
+#endif
+#endif
+
+// Some settings to enable AMPCS compatibility. This breaks regular ISF GUI compatibility
+#ifndef FW_AMPCS_COMPATIBLE
+#define FW_AMPCS_COMPATIBLE            0   //!< Whether or not JPL AMPCS ground system support is enabled.
+#endif
+
+// Define enumeration for Time base types
+enum TimeBase {
+    TB_NONE, //!< No time base has been established
+    TB_PROC_TIME, //!< Indicates time is processor cycle time. Not tied to external time
+    TB_WORKSTATION_TIME, //!< Time as reported on workstation where software is running. For testing.
+    TB_DONT_CARE = 0xFFFF //!< Don't care value for sequences. If FwTimeBaseStoreType is changed, value should be changed
+};
+
+// How many bits are used to store the time base
+#ifndef FwTimeBaseStoreType
+#define FwTimeBaseStoreType U16                 //!< Storage conversion for time base in scripts/ground interface
+#endif
+
+#ifndef FwTimeContextStoreType
+#define FwTimeContextStoreType U8                 //!< Storage conversion for time context in scripts/ground interface
+#define FW_CONTEXT_DONT_CARE 0xFF                 //!< Don't care value for time contexts in sequences
+#endif
+
+// These setting configure whether or not the timebase and context values for the Fw::Time
+// class are used. Some systems may not use or need those fields
+
+#ifndef FW_USE_TIME_BASE
+#define FW_USE_TIME_BASE                1 //!< Whether or not to use the time base
+#endif
+
+#ifndef FW_USE_TIME_CONTEXT
+#define FW_USE_TIME_CONTEXT             1 //!< Whether or not to serialize the time context
+#endif
+
+// *** NOTE configuration checks are in Fw/Cfg/ConfigCheck.cpp in order to have
+// the type definitions in Fw/Types/BasicTypes available.
+
+#endif
+```
+",bug,https://github.com/nasa/fprime/issues/1074
+Static Analysis Warning in Serializable.cpp,"According to static analysis, this code may not have the intended behavior:
+
+https://github.com/nasa/fprime/blob/ec1a9b9f3eccec94863b7498a64b845edd451b89/Fw/Types/Serializable.cpp#L481
+
+It casts the incoming `void*` value to a reference, which is undefined.
+
+I believe the correct code should be something like this:
+```c++
+SerializeStatus SerializeBufferBase::deserialize(void*& val) {
+  POINTER_CAST pointerCastVal = 0;
+  const SerializeStatus stat = this->deserialize(pointerCastVal);
+  if (stat == FW_SERIALIZE_OK) {
+      val = reinterpret_cast<void*>(pointerCastVal);
+  }
+  return stat;
+}
+```
+
+Note: This may technically be a static analysis false positive (casting a reference to a reference does seem to be allowed in C++). However, the cast from void*& to POINTER_CAST& apparently confused the static analyzer, so I think the proposed code is an improvement in any event.
+
+Also: @LeStarch points out that the original code assumed that POINTER_CAST and void* have the same size, which may not be true. We just require sizeof(POINTER_CAST) >= sizeof(void*).
+",bug,https://github.com/nasa/fprime/issues/2385
+Add component to store events in boot-persistent memory.,"| | |
+|:---|:---|
+|**_F´ Version_**| 3.4.3 |
+|**_Affected Component_**| New component |
+---
+## Feature Description
+
+Add a new component that would insert between components and `Svc/ActiveLogger` to store events in a memory FIFO that could be recovered after boot. 
+
+It would do the following:
+
+1\) Log the events in memory FIFOs provided by ""Fw/MemAllocator"". 
+2\) Have separate FIFOs by type
+3\) Pass the events from an input port (from other components) to an output port (to `Svc/ActiveLogger`)
+4\) Upon startup, take any events in the memory FIFO and send them to the output port to `Svc/ActiveLogger` for downlink.
+
+## Rationale
+
+An early version was part of `Svc/ActiveLogger`, but not all projects wanted or could use it. This approach makes it a ""tinker-toy"" component that can be inserted if needed.
+",non-bug,https://github.com/nasa/fprime/issues/2607
+Allow GDS To Output Unframed Data,"| | |
+|:---|:---|
+|**_F´ Version_**| |
+|**_Affected Component_**|  |
+---
+## Feature Description
+
+The GDS separates data contained in frames and passes that to the UI for display.  However, other data in the stream (falling outside of valid frames) is discarded.  For nominal operations this is fine, however; there can be several cases where the data is necessary.
+
+1. Multiplexed downlink: some projects push several types of data to the same output stream. For example, console log messages might be printed between valid frames
+2. Debugging: when debugging framing and other issues, it is essential to see the junk data.
+3. Data loss prevention: even mangled packets may be useful (and recovered) if certain validation steps are ignored (i.e. checksuming).  Discarding the data prevents any recovery.
+
+The GDS should add an option to log this data in the case that it is necessary.
+
+1. ""-"" can log to standard out.
+2. ""filename.log"" would log to ""<log-dir>/filename.log""
+3. When nothing is supplied, don't log (current behavior).
+4. When just the flag is supplied, create ""<log-dir>/unframed.log""
+
+## Rationale
+
+See above.",non-bug,https://github.com/nasa/fprime/issues/2382
+Make a helicopter fly on Mars,,non-bug,https://github.com/nasa/fprime/issues/478
+Array types in autocoded serializable classes have identity-equality instead of value-equality comparison operators,"| | |
+|:---|:---|
+|**_F´ Version_**| v3.0.0 j
+|**_Affected Component_**| autocoded serializables with arrays |
+---
+## Problem Description
+
+Looking at the autocode for equality comparison for autocoded serializable types...
+
+https://github.com/nasa/fprime/blob/313ef0556baec4a981f03e66de64d9193a84b867/Autocoders/Python/src/fprime_ac/generators/templates/serialize/publicSerialCpp.tmpl#L54-L56
+
+...we see that for array types it produces a comparison that checks the pointer address to the array which will only return true if the object is compared to itself (identity/entity equality). Here's an example output:
+
+Declaration:
+
+```cpp
+class MotorSpeeds : public Fw::Serializable {
+
+
+public:
+
+    enum {
+        SERIALIZED_SIZE =
+        sizeof(F32)*4
+    }; //!< serializable size of MotorSpeeds
+
+    MotorSpeeds(); //!< Default constructor
+    MotorSpeeds(const MotorSpeeds* src); //!< pointer copy constructor
+    MotorSpeeds(const MotorSpeeds& src); //!< reference copy constructor
+    MotorSpeeds(const F32* angularSpeedRadsPerSecond, NATIVE_INT_TYPE angularSpeedRadsPerSecondSize); //!< constructor with arguments
+    MotorSpeeds(const F32 angularSpeedRadsPerSecond); //!< constructor with arguments with scalars for array arguments
+    MotorSpeeds& operator=(const MotorSpeeds& src); //!< equal operator
+    bool operator==(const MotorSpeeds& src) const; //!< equality operator
+#ifdef BUILD_UT
+    // to support GoogleTest framework in unit tests
+    friend std::ostream& operator<<(std::ostream& os, const MotorSpeeds& obj);
+#endif
+
+    void set(const F32* angularSpeedRadsPerSecond, NATIVE_INT_TYPE angularSpeedRadsPerSecondSize); //!< set values
+
+    const F32* getangularSpeedRadsPerSecond(NATIVE_INT_TYPE& size) const; //!< get member angularSpeedRadsPerSecond
+
+    void setangularSpeedRadsPerSecond(const F32* val, NATIVE_INT_TYPE size); //!< set member angularSpeedRadsPerSecond
+
+
+    Fw::SerializeStatus serialize(Fw::SerializeBufferBase& buffer) const; //!< serialization function
+    Fw::SerializeStatus deserialize(Fw::SerializeBufferBase& buffer); //!< deserialization function
+#if FW_SERIALIZABLE_TO_STRING || BUILD_UT
+    void toString(Fw::StringBase& text) const; //!< generate text from serializable
+#endif
+protected:
+
+    enum {
+        TYPE_ID = 0xA09C7D3A //!< type id
+    };
+
+    F32 m_angularSpeedRadsPerSecond[4]; //<! angularSpeedRadsPerSecond - 
+
+private:
+
+};
+```
+
+Definition:
+
+```cpp
+bool MotorSpeeds::operator==(const MotorSpeeds& src) const {
+    return (
+        (src.m_angularSpeedRadsPerSecond == this->m_angularSpeedRadsPerSecond) &&
+        true);
+}
+```
+
+I feel that the object is intended to have value-type semantics (as hinted by the object being copyable and assignable assignable).",bug,https://github.com/nasa/fprime/issues/1218
+Failures of TCP/UDP unit tests,"| | |
+|:---|:---|
+|**_F´ Version_**| 6bb780d |
+|**_Affected Component_**|   |
+---
+## Problem Description
+
+Similar to https://github.com/nasa/fprime/issues/1290, https://github.com/nasa/fprime/issues/881
+
+Maybe also related to https://github.com/nasa/fprime/issues/2244
+
+I am not sure if it is having an impact outside of the UT.
+
+The tests of `Drv/TcpServer` and  `Drv/TcpClient` are often failing, about 25% of the time (excluding silent failures).
+
+It comes from several different errors:
+- [Fixed in #2739] For TcpServer and TcpClient, most of the time, an error comes from the Address already being in use (Port already in use ?), based on `errno`. Also happens on the Github CI: https://github.com/nasa/fprime/actions/runs/8839296509/job/24272334136
+```
+[ RUN      ] Nominal.BasicMessaging
+TCP server startup error: Address already in use
+Port: 48514
+/home/fprime/Drv/TcpServer/test/ut/TcpServerTester.cpp:49: Failure
+Expected equality of these values:
+  serverStat
+    Which is: -9
+  SOCK_SUCCESS
+    Which is: 0
+[  FAILED  ] Nominal.BasicMessaging (0 ms)
+```
+```
+[ RUN      ] Reconnect.ReceiveThreadReconnect
+TCP server startup error:Address already in use
+Port: 33260
+/home/fprime/Drv/TcpClient/test/ut/TcpClientTester.cpp:44: Failure
+Expected equality of these values:
+  serverStat
+    Which is: -9
+  SOCK_SUCCESS
+    Which is: 0
+[  FAILED  ] Reconnect.ReceiveThreadReconnect (0 ms)
+```
+- [Fixed in #2739] Sometimes TcpServer UT fail and can not start:
+```
+
+[ RUN      ] Nominal.BasicReceiveThread
+[WARNING] Failed to open port with status -9 and errno 98
+[WARNING] Failed to open port with status -9 and errno 98
+/home/fprime/Drv/TcpServer/test/ut/TcpServerTester.cpp:41: Failure
+Value of: Drv::Test::wait_on_started(this->component.getSocketHandler(), true, SOCKET_RETRY_INTERVAL_MS/10 + 1)
+  Actual: false
+Expected: true
+/home/fprime/Drv/TcpServer/test/ut/TcpServerTester.cpp:51: Failure
+Value of: component.getSocketHandler().isStarted()
+  Actual: false
+Expected: true
+[WARNING] Failed to open port with status -9 and errno 98
+/home/fprime/Drv/TcpServer/test/ut/TcpServerTester.cpp:65: Failure
+Value of: Drv::Test::wait_on_change(this->component.getSocketHandler(), true, SOCKET_RETRY_INTERVAL_MS/10 + 1)
+  Actual: false
+Expected: true
+/home/fprime/Drv/TcpServer/test/ut/TcpServerTester.cpp:67: Failure
+Value of: this->component.getSocketHandler().isOpened()
+  Actual: false
+Expected: true
+/home/fprime/Drv/TcpServer/test/ut/TcpServerTester.cpp:70: Failure
+Expected equality of these values:
+  status2
+    Which is: -4
+  Drv::SOCK_SUCCESS
+    Which is: 0
+/home/fprime/build-fprime-automatic-native-ut/F-Prime/Drv/TcpServer/TcpServerGTestBase.cpp:87: Failure
+Expected equality of these values:
+  size
+    Which is: 1
+  this->fromPortHistorySize_ready
+    Which is: 0
+
+/home/fprime/Drv/TcpServer/test/ut/TcpServerTester.cpp:105
+  Value:    Size of history for ready
+  Expected: 1
+  Actual:   0
+
+[  FAILED  ] Nominal.BasicReceiveThread (3001 ms)
+[----------] 2 tests from Nominal (3002 ms total)
+```
+- Sometimes, in TCP and UDP UT, the UT fail silently
+```
+TcpClient:
+[ RUN      ] Reconnect.ReceiveThreadReconnect
+Listening for single client at 127.0.0.1:57291
+Connected to 127.0.0.1:57291 as a tcp client
+Accepted client at 127.0.0.1:57291
+Connected to 127.0.0.1:57291 as a tcp client
+Accepted client at 127.0.0.1:57291
+Connected to 127.0.0.1:57291 as a tcp client
+Accepted client at 127.0.0.1:57291
+Connected to 127.0.0.1:57291 as a tcp client
+Accepted client at 127.0.0.1:57291
+[WARNING] Failed to recv from port with status -8 and errno 9
+Connected to 127.0.0.1:57291 as a tcp client
+Accepted client at 127.0.0.1:57291
+Connected to 127.0.0.1:57291 as a tcp client
+Accepted client at 127.0.0.1:57291
+Connected to 127.0.0.1:57291 as a tcp client
+Accepted client at 127.0.0.1:57291
+Connected to 127.0.0.1:57291 as a tcp client
+Accepted client at 127.0.0.1:57291
+Connected to 127.0.0.1:57291 as a tcp client
+Accepted client at 127.0.0.1:57291
+Connected to 127.0.0.1:57291 as a tcp client
+Accepted client at 127.0.0.1:57291
+[       OK ] Reconnect.ReceiveThreadReconnect (103 ms)
+```
+```
+TcpServer:
+[ RUN      ] Nominal.BasicReceiveThread
+Listening for single client at 127.0.0.1:44010
+Connected to 127.0.0.1:44010 as a tcp client
+Accepted client at 127.0.0.1:44010
+[WARNING] Failed to recv from port with status -8 and errno 0
+[       OK ] Nominal.BasicReceiveThread (20 ms)
+```
+```
+TcpServer:
+[ RUN      ] Nominal.BasicReceiveThread
+Listening for single client at 127.0.0.1:40343
+Connected to 127.0.0.1:40343 as a tcp client
+Accepted client at 127.0.0.1:40343
+[WARNING] Failed to open port with status -14 and errno 0
+[       OK ] Nominal.BasicReceiveThread (1021 ms)
+```
+```
+TcpServer:
+[ RUN      ] Reconnect.ReceiveThreadReconnect
+Listening for single client at 127.0.0.1:63959
+Connected to 127.0.0.1:63959 as a tcp client
+Accepted client at 127.0.0.1:63959
+[WARNING] Failed to recv from port with status -8 and errno 0
+Connected to 127.0.0.1:63959 as a tcp client
+Accepted client at 127.0.0.1:63959
+[WARNING] Failed to recv from port with status -8 and errno 0
+Connected to 127.0.0.1:63959 as a tcp client
+Accepted client at 127.0.0.1:63959
+[WARNING] Failed to recv from port with status -8 and errno 0
+Connected to 127.0.0.1:63959 as a tcp client
+Accepted client at 127.0.0.1:63959
+[WARNING] Failed to recv from port with status -8 and errno 0
+Connected to 127.0.0.1:63959 as a tcp client
+Accepted client at 127.0.0.1:63959
+[WARNING] Failed to recv from port with status -8 and errno 0
+Connected to 127.0.0.1:63959 as a tcp client
+Accepted client at 127.0.0.1:63959
+[WARNING] Failed to recv from port with status -8 and errno 0
+Connected to 127.0.0.1:63959 as a tcp client
+Accepted client at 127.0.0.1:63959
+[WARNING] Failed to recv from port with status -8 and errno 0
+Connected to 127.0.0.1:63959 as a tcp client
+Accepted client at 127.0.0.1:63959
+[WARNING] Failed to recv from port with status -8 and errno 0
+Connected to 127.0.0.1:63959 as a tcp client
+Accepted client at 127.0.0.1:63959
+[WARNING] Failed to recv from port with status -8 and errno 0
+Connected to 127.0.0.1:63959 as a tcp client
+Accepted client at 127.0.0.1:63959
+[WARNING] Failed to recv from port with status -8 and errno 0
+[       OK ] Reconnect.ReceiveThreadReconnect (113 ms)
+```
+```
+Udp:
+[ RUN      ] Reconnect.ReceiveThreadReconnect
+Setup to send and receive udp to 127.0.0.1:60059
+Setup to send and receive udp to 127.0.0.1:37290
+Setup to send and receive udp to 127.0.0.1:60059
+Setup to send and receive udp to 127.0.0.1:37290
+Setup to send and receive udp to 127.0.0.1:60059
+Setup to send and receive udp to 127.0.0.1:37290
+Setup to send and receive udp to 127.0.0.1:60059
+Setup to send and receive udp to 127.0.0.1:37290
+[WARNING] Failed to recv from port with status -8 and errno 0
+Setup to send and receive udp to 127.0.0.1:60059
+Setup to send and receive udp to 127.0.0.1:37290
+Setup to send and receive udp to 127.0.0.1:60059
+Setup to send and receive udp to 127.0.0.1:37290
+Setup to send and receive udp to 127.0.0.1:60059
+Setup to send and receive udp to 127.0.0.1:37290
+Setup to send and receive udp to 127.0.0.1:60059
+Setup to send and receive udp to 127.0.0.1:37290
+Setup to send and receive udp to 127.0.0.1:60059
+Setup to send and receive udp to 127.0.0.1:37290
+Setup to send and receive udp to 127.0.0.1:60059
+Setup to send and receive udp to 127.0.0.1:37290
+[       OK ] Reconnect.ReceiveThreadReconnect (103 ms)
+```
+```
+Udp:
+[ RUN      ] Reconnect.ReceiveThreadReconnect
+Setup to send and receive udp to 127.0.0.1:24765
+Setup to send and receive udp to 127.0.0.1:53978
+Setup to send and receive udp to 127.0.0.1:24765
+Setup to send and receive udp to 127.0.0.1:53978
+Setup to send and receive udp to 127.0.0.1:24765
+Setup to send and receive udp to 127.0.0.1:53978
+Setup to send and receive udp to 127.0.0.1:24765
+Setup to send and receive udp to 127.0.0.1:53978
+[WARNING] Failed to recv from port with status -8 and errno 9
+Setup to send and receive udp to 127.0.0.1:24765
+Setup to send and receive udp to 127.0.0.1:53978
+Setup to send and receive udp to 127.0.0.1:24765
+Setup to send and receive udp to 127.0.0.1:53978
+Setup to send and receive udp to 127.0.0.1:24765
+Setup to send and receive udp to 127.0.0.1:53978
+Setup to send and receive udp to 127.0.0.1:24765
+Setup to send and receive udp to 127.0.0.1:53978
+Setup to send and receive udp to 127.0.0.1:24765
+Setup to send and receive udp to 127.0.0.1:53978
+Setup to send and receive udp to 127.0.0.1:24765
+Setup to send and receive udp to 127.0.0.1:53978
+[       OK ] Reconnect.ReceiveThreadReconnect (102 ms)
+```
+
+## Context / Environment
+
+Execute `fprime-util version-check` and share the output.
+
+```
+Operating System: Linux
+CPU Architecture: x86_64
+Platform: Linux-5.10.102.1-microsoft-standard-WSL2-x86_64-with-glibc2.29
+Python version: 3.8.10
+CMake version: 3.28.1
+Pip version: 20.0.2
+Pip packages:
+    fprime-tools==3.4.4
+    fprime-gds==3.4.3
+    fprime-fpp-*==2.1.0a9
+```
+
+Running fprime on `ubuntu:20.04` docker image.
+
+Same behavior identified on a `ubuntu:22.04` docker image.
+
+## How to Reproduce
+
+1. Go to fprime root
+2. Execute `fprime generate --ut`
+3. Execute `fprime build --ut -j16`
+4. Save the following python script:
+```python
+import subprocess
+import shutil
+
+FPRIME_PATH=""/home/fprime""
+LOG_PATH=""/home/log_tcp_udp_error/""
+ITERATIONS=100
+
+calls = [
+    FPRIME_PATH + ""/build-fprime-automatic-native-ut/bin/Linux/Drv_TcpClient_ut_exe"",
+    FPRIME_PATH + ""/build-fprime-automatic-native-ut/bin/Linux/Drv_TcpServer_ut_exe"",
+    FPRIME_PATH + ""/build-fprime-automatic-native-ut/bin/Linux/Drv_Udp_ut_exe"",
+]
+
+for call in calls:
+    executable = call.split('/')[-1]
+    print(executable)
+    for ii in range(0, ITERATIONS):
+        print(f""Test number {ii:04}"")
+        try:
+            output = subprocess.check_output([call], cwd=FPRIME_PATH, stderr=subprocess.PIPE)
+            string_output = output.decode()
+            if ""[WARNING] Failed"" in string_output:
+                print(""Silent failure"")
+                f = open(LOG_PATH + f""silent_{executable}_{ii:04}.log"", ""x"")
+                f.write(string_output)
+                f.close()
+        except subprocess.CalledProcessError as grepexc:
+            print(""Error code:"", grepexc.returncode)
+            f = open(LOG_PATH + f""{executable}_{ii:04}.log"", ""x"")
+            f.write(grepexc.output.decode())
+            f.close()
+```
+5. Tune the values `FPRIME_PATH` to the current fprime folder and `LOG_PATH` to an empty folder to save log of unit tests. `ITERATIONS` can also be changed to increase the amount of run of the unit tests
+6. Execute the python script
+7. Check the log in the `LOG_PATH` folder
+
+## Expected Behavior
+
+No error should be generated. The unit tests should also fail on warning
+",bug,https://github.com/nasa/fprime/issues/2706
+ActiveTextLoggerComponent does not have async_input port,"| | |
+|:---|:---|
+|**_F´ Version_**| current |
+|**_Affected Component_**| Svc |
+---
+## Problem Description
+
+ActiveTextLoggerComponent is `kind=""active""`:
+https://github.com/nasa/fprime/blob/devel/Svc/ActiveTextLogger/ActiveTextLoggerComponentAi.xml
+
+However, it does not have an `async_input` port as required by the schematron spec:
+https://github.com/nasa/fprime/blob/devel/Autocoders/Python/schema/default/active_comp_schematron.rng
+
+## How to Reproduce
+
+This was found by enabling exceptions for schematron validation failures (see #325).
+
+## Expected Behavior
+
+Change component so it passes schematron validation and passes gtests.",bug,https://github.com/nasa/fprime/issues/449
+Add file stat command to `Svc::FileManager`,It is useful to be able to get the size of individual files in a directory since the file list command is limited in the number of files that can be listed. Add a command that takes the file name and issues and event with the size for that file.,non-bug,https://github.com/nasa/fprime/issues/298
+CI fails on `info-cache/fpp_depend` step non-deterministically ,"| | |
+|:---|:---|
+|**_F´ Version_**| |
+|**_Affected Component_**|   |
+---
+## Problem Description
+
+CI seems to fail on `info-cache/fpp_depend` step, non-deterministically 
+See 
+- https://github.com/nasa/fprime/actions/runs/6935576907/attempts/1
+- https://github.com/nasa/fprime/actions/runs/6935576907/attempts/2
+
+No changes have been made between these 2 attempts, yet attempt 1 gave 
+
+```
+[sub-build] Failed to execute: info-cache/fpp_depend:
+  Error copying file (if different) from
+  ""/home/runner/work/fprime/fprime/build-fprime-automatic-native/sub-build-info-cache/F-Prime/Fw/Comp/fpp_cache/unittest.txt""
+  to
+  ""/home/runner/work/fprime/fprime/build-fprime-automatic-native/F-Prime/Fw/Comp/fpp-cache"".
+```
+
+Different workflows have also shown the same error, e.g. https://github.com/nasa/fprime/actions/runs/6935576919/job/18865988581?pr=2371
+
+## How to Reproduce
+
+1. Not sure...
+
+## Expected Behavior
+
+Generate step should not fail.
+",bug,https://github.com/nasa/fprime/issues/2383
+Duplicate Enums in Dictionary,"There doesn't seems to be any deduplication logic when adding enums to the deployment's dictionary.
+
+The Ref deployment, for example, has the `Ref::SignalType` enum in the dictionary a half dozen times.
+We should investigate what is causing this.
+
+```
+  <enums>
+    <enum type=""CommandDispatcher::error::ErrorResponse"">
+      <item name=""ERR_INVALID_OPCODE"" value=""0"" description=""Invalid opcode dispatched""/>
+      <item name=""ERR_VALIDATION_ERROR"" value=""1"" description=""Command failed validation""/>
+      <item name=""ERR_FORMAT_ERROR"" value=""2"" description=""Command failed to deserialize""/>
+      <item name=""ERR_EXECUTION_ERROR"" value=""3"" description=""Command had execution error""/>
+      <item name=""ERR_BUSY"" value=""4"" description=""Component busy""/>
+      <item name=""ERR_UNEXP"" value=""5"" description=""Unexpected response""/>
+    </enum>
+    <enum type=""CommandDispatcher::Status::CmdSerError"">
+      <item name=""ERR_BUFFER_TOO_SMALL"" value=""0"" description=""Buffer too small""/>
+      <item name=""ERR_BUFFER_FORMAT"" value=""1"" description=""Buffer wrong format""/>
+      <item name=""ERR_SIZE_MISMATCH"" value=""2"" description=""Buffer size mismatch""/>
+      <item name=""ERR_TYPE_MISMATCH"" value=""3"" description=""Buffer type mismatch""/>
+      <item name=""ERR_UNEXP_STAT"" value=""4"" description=""Unexpected status""/>
+    </enum>
+    <enum type=""PrmDb::stage::PrmWriteError"">
+      <item name=""PRM_WRITE_OPEN"" value=""0""/>
+      <item name=""PRM_WRITE_DELIMETER"" value=""1""/>
+      <item name=""PRM_WRITE_DELIMETER_SIZE"" value=""2""/>
+      <item name=""PRM_WRITE_RECORD_SIZE"" value=""3""/>
+      <item name=""PRM_WRITE_RECORD_SIZE_SIZE"" value=""4""/>
+      <item name=""PRM_WRITE_PARAMETER_ID"" value=""5""/>
+      <item name=""PRM_WRITE_PARAMETER_ID_SIZE"" value=""6""/>
+      <item name=""PRM_WRITE_PARAMETER_VALUE"" value=""7""/>
+      <item name=""PRM_WRITE_PARAMETER_VALUE_SIZE"" value=""8""/>
+    </enum>
+...
+    <enum type=""Ref::SignalType"">
+      <item name=""TRIANGLE"" value=""0"" description=""""/>
+      <item name=""SQUARE"" value=""1"" description=""""/>
+      <item name=""SINE"" value=""2"" description=""""/>
+      <item name=""NOISE"" value=""3"" description=""""/>
+    </enum>
+    <enum type=""Ref::SignalType"">
+      <item name=""TRIANGLE"" value=""0"" description=""""/>
+      <item name=""SQUARE"" value=""1"" description=""""/>
+      <item name=""SINE"" value=""2"" description=""""/>
+      <item name=""NOISE"" value=""3"" description=""""/>
+    </enum>
+...
+    <enum type=""Ref::SignalType"">
+      <item name=""TRIANGLE"" value=""0"" description=""""/>
+      <item name=""SQUARE"" value=""1"" description=""""/>
+      <item name=""SINE"" value=""2"" description=""""/>
+      <item name=""NOISE"" value=""3"" description=""""/>
+    </enum>
+  </enums>
+```",bug,https://github.com/nasa/fprime/issues/241
+CI FPP and Versioning Error Messages,"| | |
+|:---|:---|
+|**_F´ Version_**| |
+|**_Affected Component_**|   |
+---
+## Problem Description
+
+Currently the ""wrong FPP version"" message is not useful.  Also CI cannot run with newer versions of CI.  We should fix this.",bug,https://github.com/nasa/fprime/issues/1464
+PolyDb updates to enforce single writer,"| | |
+|:---|:---|
+|**_F´ Version_**| |
+|**_Affected Component_**|  PolyDb |
+---
+## Feature Description
+
+Enforcing a single writer to measurement to prevent accidentally writing to the incorrect measurement .  This was brought up by Adit.
+
+## Rationale
+
+There is nothing preventing a component from accidentally writing a value to the incorrect measurement.  ",non-bug,https://github.com/nasa/fprime/issues/2224
+Remove Polling Buffer in Deframer Code,"| | |
+|:---|:---|
+|**_F´ Version_**| |
+|**_Affected Component_**|   |
+---
+## Problem Description
+
+Deframer has poll and `schedIn` functionality.  It does not need this functionality. Drivers that need to support polling can have a schedIn method themselves.",non-bug,https://github.com/nasa/fprime/issues/2073
+GDS - Create CFDP Class 1 file packets,"| | |
+|:---|:---|
+|**_F´ Version_**| |
+|**_Affected Component_**|  |
+---
+## Feature Description
+
+Implement the CFDP Protocol Data Units (PDU) for Class 1 defined in section 5 of the CFDP Recommended Standard. This feature is for changes to F' GDS.
+
+Implements the following:
+FilePacket
+Header
+Metadata
+EndOfFile
+Finished
+FileData
+
+Recommended Standard:
+https://public.ccsds.org/Pubs/727x0b5.pdf
+
+## Rationale
+
+Supports #2768.
+
+Related to #2769.
+",non-bug,https://github.com/nasa/fprime/issues/2771
+Add code coverage to tutorials,"| | |
+|:---|:---|
+|**_F´ Version_**| |
+|**_Affected Component_**|  |
+---
+## Feature Description
+
+So far, no tutorial covers checking unit test code coverage in detail. A github markdown should be created that explains how to check for code coverage. This markdown can be linked in any tutorial that mentions unit testing.
+
+
+",non-bug,https://github.com/nasa/fprime/issues/2112
+command_res is active but does not have async_input port,"| | |
+|:---|:---|
+|**_F´ Version_**| current |
+|**_Affected Component_**| Autocoder |
+---
+## Problem Description
+
+command_res is `kind=""active""`:
+https://github.com/nasa/fprime/blob/devel/Autocoders/Python/test/command_res/Test1ComponentAi.xml
+
+However, it does not have an `async_input` port as required by the schematron spec:
+https://github.com/nasa/fprime/blob/devel/Autocoders/Python/schema/default/active_comp_schematron.rng
+
+## How to Reproduce
+
+This was found by enabling exceptions for schematron validation failures (see #325).
+
+## Expected Behavior
+
+Change component so it passes validation and passes gtests.",bug,https://github.com/nasa/fprime/issues/451
+RedHat support for native FPP tools don't work,"| | |
+|:---|:---|
+|**_F´ Version_**| |
+|**_Affected Component_**|   |
+---
+## Problem Description
+
+A description of the problem with sufficient detail to understand the issue.
+
+## How to Reproduce
+
+1. 
+2.
+3.
+
+## Expected Behavior
+
+A description of the expected behavior.
+",bug,https://github.com/nasa/fprime/issues/1707
+FileDownlink: Add `sendPartial` port,"| | |
+|:---|:---|
+|**_F´ Version_**|[v3.4.3](https://github.com/nasa/fprime/releases/tag/v3.4.3) |
+|**_Affected Component_**|`Svc/FileDownlink`  |
+---
+## Feature Description
+
+Add a `sendPartial` port that behaves the same way as the command, i.e. it will send a partial file with a specified size and offset.
+
+## Rationale
+
+An alternate to #2833.
+
+`DpCatalog` could send down file portions via this port to avoid having to retransmit the entire file in the event of a failure. The Dp could be resumed after the last successfully downlinked portion.
+",non-bug,https://github.com/nasa/fprime/issues/2844
+Autocoder does not automatically include CmdPort,"| | |
+|:---|:---|
+|**_F´ Version_**|>1.5 |
+|**_Affected Component_**| Autocoder  |
+---
+## Problem Description
+
+When *ComponentAi.xml only contains parameter and not any command the autocoder does not include
+Fw/Cmd/CmdPortAc.hpp which causes the following error:
+
+![image](https://user-images.githubusercontent.com/35859004/108405426-eb06db80-71d5-11eb-9880-2ecd86e10049.png)
+
+## How to Reproduce
+
+1. Use a ComponentAi.xml with parameters and no command
+2. generate and build the component
+
+## Expected Behavior
+
+Include CmdPortAc.hpp automatically when parameters are present without command in  *ComponentAi.xml
+",bug,https://github.com/nasa/fprime/issues/369
+F Prime CI/CD Test Runner,"During the development of the API it became apparent that the Test Runner would have bled into the scope of other testing efforts at the time. So the test API work de-scoped developing a test runner script. However, because discussions were had on what the Test Runner should do, the requirements for the Test Runner are still captured here.
+
+- The Test Runner shall collect artifacts to record the condition of the tests.
+  - History logs
+  - Copies of the FSW dictionaries
+  - A copy of the FSW binary
+- The Test Runner shall collect files to record the results of the tests.
+  - Test logs
+  - Test reports
+- The Test Runner shall support specifying a deployment directory to discover and run Integration Tests.
+- The Test Runner should be usable by CI/CD setup.
+- The Test Runner should support different test configurations
+- The Test Runner should have a Command Line Interface",non-bug,https://github.com/nasa/fprime/issues/2646
+Remove Ground Interface,"| | |
+|:---|:---|
+|**_F´ Version_**| |
+|**_Affected Component_**|  |
+---
+## Feature Description
+
+The GroundInterface component has been entirely surpassed by Framer and Deframe. It needs to be removed.",non-bug,https://github.com/nasa/fprime/issues/2037
+Clean Up Tutorial Suite,"| | |
+|:---|:---|
+|**_F´ Version_**| |
+|**_Affected Component_**|  |
+---
+## Feature Description
+
+Rework Math Tutorial",non-bug,https://github.com/nasa/fprime/issues/2061
+In the MathComponent Tutorial the MathSend unit test does not work,"| | |
+|:---|:---|
+|**_F´ Version_**| |
+|**_Affected Component_**|   MathSend unit test|
+---
+## Problem Description
+
+The unit test in the `MathSender::testDoMath` method is failing at the assert
+```
+    // verify that the math operation port was invoked once
+    ASSERT_from_mathOpOut_SIZE(1);
+```
+Note that MathSenderTesterHelper.cpp is being generated but not used.  When I attempt to add it to build I get errors and build fails.  @LeStarch said it should not be generated in a slack chat.  
+
+Should it be set(UT_AUTO_HELPERS ON) or set(UT_AUTO_TEST_HELPERS ON) in the tutorial.  The first one works ok to build.
+
+A description of the problem with sufficient detail to understand the issue.
+
+## Context / Environment
+
+Execute `fprime-util version-check` and share the output.
+
+```
+The version-check does not appear to be implemented????
+```
+
+## How to Reproduce
+
+1.  Follow the steps in the MathSender unit test part of the MathComponent tutorial.  It should build ok.  
+2.
+3.
+
+## Expected Behavior
+
+Expected all tests to pass ok.
+
+Here is the test log and test/ut files for reference and reproduction of problem
+[LastTest.log](https://github.com/nasa/fprime/files/14136783/LastTest.log)
+
+[MathSenderTester.cpp.txt](https://github.com/nasa/fprime/files/14136823/MathSenderTester.cpp.txt)
+[MathSenderTester.hpp.txt](https://github.com/nasa/fprime/files/14136824/MathSenderTester.hpp.txt)
+[MathSenderTestMain.cpp.txt](https://github.com/nasa/fprime/files/14136825/MathSenderTestMain.cpp.txt)
+",bug,https://github.com/nasa/fprime/issues/2514
+Remove vsnprintf from StringType.cpp - pulls in libraries for embedded,"| | |
+|:---|:---|
+|**_F´ Version_**| |
+|**_Affected Component_**|   |
+---
+## Problem Description
+
+Analyze the usage of of printf family of functions to minimize the code space requirements on deeply embedded systems.",bug,https://github.com/nasa/fprime/issues/1708
+Build Broken on Mac OSX,"The (framework) build doesn't work on OSX.
+
+```
+-- Looking for pthread.h - not found
+CMake Error at /Applications/CMake.app/Contents/share/cmake-3.5/Modules/FindPackageHandleStandardArgs.cmake:148 (message):
+-- Configuring incomplete, errors occurred!
+  Could NOT find Threads (missing: Threads_FOUND)
+See also ""/Users/mstarch/code/fprime-infra/fprime-sw/build-fprime-automatic-native/CMakeFiles/CMakeOutput.log"".
+Call Stack (most recent call first):
+See also ""/Users/mstarch/code/fprime-infra/fprime-sw/build-fprime-automatic-native/CMakeFiles/CMakeError.log"".
+  /Applications/CMake.app/Contents/share/cmake-3.5/Modules/FindPackageHandleStandardArgs.cmake:388 (_FPHSA_FAILURE_MESSAGE)
+  /Applications/CMake.app/Contents/share/cmake-3.5/Modules/FindThreads.cmake:223 (FIND_PACKAGE_HANDLE_STANDARD_ARGS)
+  cmake/platform/Darwin.cmake:11 (FIND_PACKAGE)
+  cmake/platform/CMakeLists.txt:31 (include)
+  cmake/FPrime.cmake:22 (include)
+  CMakeLists.txt:24 (include)
+```",bug,https://github.com/nasa/fprime/issues/299
+Buffer.cpp assert when constructor is called with NULL pointer,"| | |
+|:---|:---|
+|**_F´ Version_**|2.0.0 |
+|**_Affected Component_**| various  |
+---
+## Problem Description
+
+If a user creates an `Fw::Buffer` instance this way:
+
+```
+Fw::Buffer fwBuffer(NULL, 0, 0);
+```
+
+The code will assert. 
+
+## How to Reproduce
+
+## Expected Behavior
+
+Debate: Should NULL be a valid value? If so, this should be fixed.
+",bug,https://github.com/nasa/fprime/issues/805
+Raspberry PI (a $135 embedded Linux computer).,"| | |
+|:---|:---|
+|**_F´ Version_**| |
+|**_Affected Component_**|   |
+---
+## Problem Description
+
+Due to the rising cost of inflation and global chip shortage, the Raspberry PI is no longer a $35 embedded Linux computer! I suggest updating the documentation in the README.md. =~$135 is a bit more accurate. 
+
+## How to Reproduce
+
+1. 
+2.
+3.
+
+## Expected Behavior
+
+A description of the expected behavior.
+",bug,https://github.com/nasa/fprime/issues/1712
+"When Changin FPP Annotations Only, Dictionary Does Not Rebuild","| | |
+|:---|:---|
+|**_F´ Version_**| |
+|**_Affected Component_**|  |
+---
+## Feature Description
+
+When changing only an annotation in an FPP model, the dictionary may not rebuild to cache the changes (GDS dictionary tab).",bug,https://github.com/nasa/fprime/issues/1991
+GDS Logs in Triplicate,"| | |
+|:---|:---|
+|**_F´ Version_**| |
+|**_Affected Component_**|   |
+---
+## Problem Description
+
+Log messages in GDS are printed thrice.
+
+## How to Reproduce
+
+Look at any Python GDS log (e.g. comm.py.log).
+
+## Expected Behavior
+
+Single log output.",bug,https://github.com/nasa/fprime/issues/2378
+RPI Tutorial: Failed to uplink and open socket,"| | |
+|:---|:---|
+|**_2.0.0_**| |
+|**_RPI Tutorial_**|   |
+---
+## Problem Description
+
+After following the RPI Demo Tutorial, when trying to connect between the GUI and RPI every command uplink fails. Exiting the 
+GUI results in a message that the socket at 0.0.0.0:50000 failed to open. 
+![Screenshot from 2021-09-22 14-11-36](https://user-images.githubusercontent.com/89213755/134398591-ae7918f9-f3dc-4e00-a0c6-a52d98f0de79.png)
+
+## How to Reproduce
+
+1. Follow RPI Tutorial
+2. Use command _fprime-gds -n_ instead of _./scripts/run_rpi_cross.sh_ to launch GUI
+3. Send a command in the GUI
+4. Exit GUI in the terminal
+
+## Expected Behavior
+After sending a command in the GUI, the uplink should fail to send the respective number of bytes of data after 3 retries. When exiting the GUI, an error should appear: _Failed to open socket at 0.0.0.0:50000, retrying: OSError: [Errno 22] Invalid argument_ 
+",bug,https://github.com/nasa/fprime/issues/1060
+implement `fprime-util clean` command,"| | |
+|:---|:---|
+|**_F´ Version_**| |
+|**_Affected Component_**|  |
+---
+## Feature Description
+
+`fprime-util clean` command
+
+## Rationale
+
+As to be able to cleanup/purge fprime build cache without having to run `rm -rf build-*`
+",non-bug,https://github.com/nasa/fprime/issues/2332
+Setup OSAL Refactoring CMake Support,"| | |
+|:---|:---|
+|**_F´ Version_**| |
+|**_Affected Component_**|  |
+---
+## Feature Description
+
+Add `register_fprime_implementation`, `require_fprime_implementation`, and `choose_fprime_implementation` functions to allow for dealing in multiple implementations and the choices therein.",non-bug,https://github.com/nasa/fprime/issues/2456
+Formalize process for PRs that require changes on test repos,"| | |
+|:---|:---|
+|**_F´ Version_**| |
+|**_Affected Component_**|  |
+---
+## Feature Description
+
+CI now runs checks on external repositories such as https://github.com/fprime-community/fprime-workshop-led-blinker
+When a user makes a PR that proposes a change that requires a change of how to use F´, this will result in breakage of the CI.
+
+For now, we have a `devel` branch where users can make a PR and make the appropriate change (e.g. see https://github.com/fprime-community/fprime-workshop-led-blinker/pull/38)
+This becomes weird because we want `master` to host the latest docs, and `devel` to host the compatible version with `devel` of core F´... which leads to master and devel diverging. 
+
+Let's formalize (maybe rework?) and capture that process.
+",non-bug,https://github.com/nasa/fprime/issues/2278
+fprime-util generate should not fail if run twice,"| | |
+|:---|:---|
+|**_F´ Version_**| 3.4.3|
+|**_Affected Component_**| N/A  |
+---
+## Problem Description
+
+fprime-util generate fails if it has already been run, even if the first run was successful. 
+
+A typical cmake workflow is ```cmake .. && make```. The parallel for F' would be ```fprime-util generate && fprime-util build```, which fails after the first generate. Understood that fprime-util build probably re-runs generate if it needs to, and you only _need_ to run generate once, but from a 'use tools like you're used to' perspective, fprime-util generate should be indempotent and not fail if it has nothing to do.
+
+## Context / Environment
+
+Execute `fprime-util version-check` and share the output.
+
+```
+$ fprime-util version-check
+Operating System: Linux
+CPU Architecture: x86_64
+Platform: Linux-6.8.0-40-generic-x86_64-with-glibc2.35
+Python version: 3.10.12
+CMake version: 3.22.1
+Pip version: 24.2
+Pip packages:
+    fprime-tools==3.4.4
+    fprime-gds==3.4.3
+    fprime-fpp-*==2.1.0a3
+
+```
+
+## How to Reproduce
+
+Run fprime-util generate twice
+
+## Expected Behavior
+
+Similar to cmake, the second time should either print 'already generated', or some other small message and return success. This is useful for scripting 'generate' and 'build' tasks which rely on the error code.
+",bug,https://github.com/nasa/fprime/issues/2869
+Switch to Github Actions Code Scanner,"| | |
+|:---|:---|
+|**_F´ Version_**| |
+|**_Affected Component_**|   |
+---
+## Problem Description
+
+Switch to Github actions code scanner to replace LGTM.",non-bug,https://github.com/nasa/fprime/issues/1693
+Prettify error message if googletest is missing,"| | |
+|:---|:---|
+|**_F´ Version_**| 3.4.0 |
+|**_Affected Component_**|  |
+---
+## Feature Description
+
+Make it obvious and suggest a resolution when the googletest submodule hasn't been cloned.
+",non-bug,https://github.com/nasa/fprime/issues/2395
+Split System Resources Into Version and System Reources Component,"| | |
+|:---|:---|
+|**_F´ Version_**| |
+|**_Affected Component_**|  |
+---
+## Feature Description
+
+The System Resources component internalizes version telemetry, command, and events.  We should build a new version component that does the following:
+
+1. Version events (EVRs) at start-up and upon command
+2. Version telemetry channels (EHA)
+3. Versions to track:
+  1. Fprime framework version (git version of F´ repo)
+  2. Project version (git version of project repo)
+  3. Library versions (git version and name of each fprime-library repo)
+
+",non-bug,https://github.com/nasa/fprime/issues/2604
+Make the stub Linux drivers emulate nominal behavior,"As I revise the RPI demo, I'm encountering the following behavior: if I put in flight-like assertions that driver initialization is OK, then the app crashes on the Mac. I presume this is because the stub drivers return error status on the Mac, even when nothing is wrong. Presumably it would work better on the RPI, but we want the demo to behave nicely on Mac/Linux. So for now I am putting in a bunch of code to handle error cases and behave nicely if things fail. This code is non-flight-like, and somewhat annoying to write.
+
+I think it would be better if we had stub drivers always do something reasonable and always return OK. That way we could plug a stub driver into flight-like code that says FW_ASSERT(driverInit()) and everything will still work. The driver behavior can still be very limited for the demo, but at least it won't report a failure that the application layer has to handle in a non-flight-like way.",non-bug,https://github.com/nasa/fprime/issues/1145
+FPrime GDS time conversions lose accuracy,"| | |
+|:---|:---|
+|**_F´ Version_**| |
+|**_Affected Component_**|  |
+---
+## Feature Description
+
+fprime-gds creates the file, `channel.log`. This log shows a list of channels and the corresponding time-stamp in two different time systems: UTC and spacecraft clock (referring to as SCLK from henceforth).
+
+Working on the CADRE mission, the SCLK is telemetered as a U32 for integer seconds and a U32 for microseconds. This combined time is then converted to UTC, which is displayed in `YYYY-MM-DD HH:MM:SS`.
+
+I probably can't publicly share channel data, here are just the timestamps from this file:
+```
+2023-11-15 00:15:31  (2(0)-1700007331:105410)
+2023-11-15 00:15:31  (2(0)-1700007331:116909)
+2023-11-15 00:15:31  (2(0)-1700007331:117097)
+2023-11-15 00:15:31  (2(0)-1700007331:117104)
+2023-11-15 00:15:31  (2(0)-1700007331:117115)
+2023-11-15 00:15:31  (2(0)-1700007331:117118)
+2023-11-15 00:15:31  (2(0)-1700007331:117122)
+2023-11-15 00:15:31  (2(0)-1700007331:130901)
+2023-11-15 00:15:31  (2(0)-1700007331:217087)
+2023-11-15 00:15:31  (2(0)-1700007331:217156)
+2023-11-15 00:15:31  (2(0)-1700007331:217172)
+2023-11-15 00:15:31  (2(0)-1700007331:217175)
+2023-11-15 00:15:31  (2(0)-1700007331:217176)
+```
+
+Note how the sub-seconds are increasing, yet the UTC is static. This means that a user needing fine-resolution on time is precluded from working in UTC. This also means that a user trying to sort data by UTC will never get data in the correct order.
+
+The fundamental philosophy that must be applied to the ground system is that any conversion (time, DN->EU, units, etc.) should never decrease the resolution of the source data.
+
+The request here is to update the time conversion routine to at minimum carry forward the resolution of the core SCLK. A simplification could be made such that UTC is converted to microsecond-resolution and mission-specific implementations could update the routine for higher accuracy if required.
+
+## Rationale
+
+Make it more operable.",non-bug,https://github.com/nasa/fprime/issues/2375
+CmdSequencer asserts if timebase changes while executing a sequence,"| | |
+|:---|:---|
+|**_F´ Version_**| Pre 2.0. Did a quick code scan on v3 and the bug appears to still be present |
+|**_Affected Component_**|  CmdSequencer |
+---
+## Problem Description
+
+CmdSequencer triggers an FW_ASSERT in Fw::Time if the timebase changes while executing a sequence. This happens because the Timer object used calls `Fw::Time::compare` with `Fw::Time` objects with two different timebases
+
+https://github.com/nasa/fprime/blob/ba30515cfe84c34d4815df2bc01a95652c8db88c/Fw/Time/Time.cpp#L164-L167
+
+
+## How to Reproduce
+
+1. Start an F Prime deployment in  TimeBase 1
+2. Execute a sequence that begins with a relative delay. eg. `R00:01:00 cmdDisp.CMD_NO_OP`
+3. Switch the timebase to TimeBase 2
+4. Observe FW_ASSERT
+
+## Expected Behavior
+
+It's not clear what exactly CmdSequencer should do in this situation. It could immediately run the command or it could better keep track of the amount of time to wait before executing the sequence. CmdSequencer could also try grabbing time in a monotonic time base.
+",bug,https://github.com/nasa/fprime/issues/2539
+GDS doesnt show file downlink inside GUI,"| | |
+|:---|:---|
+|**_F´ Version_**| |
+|**_Affected Component_**|   |
+---
+## Problem Description
+
+During the workshop at Georgia Tech, I tried to downlink a file using the System Reference Deployment and was not able to see the file in the GUI even though I could access the file by going to the tmp/ directory on the docker machine. I was running the GDS through the rancher desktop setup as specified in the System Reference repo running on a Mac OS Host machine. 
+
+## How to Reproduce
+
+1. Compile the System Reference deployment for the raspberry pi on rancher desktop
+2. Upload the file to the raspi
+3. Start the GDS on rancher desktop
+4. Create a text file using the File Manager component shell command (touch test.txt) through the GDS
+5. Attempt to downlink the file using the File Downlink component through the GDS
+
+## Expected Behavior
+
+The file does not show up in the downlink tab of the GDS, but does appear in the tmp/ directory. I'm not sure if it was just an environment problem, but wanted to put up an issue. 
+",bug,https://github.com/nasa/fprime/issues/1654
+Add CMAKE variable list to F Prime docs,"| | |
+|:---|:---|
+|**_F´ Version_**| 3.x |
+|**_Affected Component_**| n/a |
+---
+## Feature Description
+
+There are a handy set of CMAKE defined variables like `${FPRIME_PROJECT_ROOT}` that make the CMakeList.txt pathnames cleaner. Add a table of them to the F Prime docs with some examples.
+
+## Rationale
+
+Makes writing CMakeList.txt files easier.
+",non-bug,https://github.com/nasa/fprime/issues/1912
+Fix Issues Reported with Workshop,"| | |
+|:---|:---|
+|**_F´ Version_**| |
+|**_Affected Component_**|  |
+---
+## Feature Description
+
+See Led workshop github page.",non-bug,https://github.com/nasa/fprime/issues/2062
+Flask 2.0.0 is not compatible with GDS,"| | |
+|:---|:---|
+|**_F´ Version_**| F Prime 1.5 |
+|**_Affected Component_**|  GDS |
+---
+## Problem Description
+
+Flask 2.0 was just released to PyPi and is now causing issues in GDS. I receive the following error on fresh F Prime install on 5/11/21.
+
+```bash
+Usage: python -m flask run [OPTIONS]
+Try 'python -m flask run --help' for help.
+
+Error: While importing 'fprime_gds.flask.app', an ImportError was raised:
+
+Traceback (most recent call last):
+  File ""FPRIME_CODE_2021_05_11_31/dev-python-env-fprime/lib/python3.8/site-packages/flask/cli.py"", line 256, in locate_app
+    __import__(module_name)
+  File ""FPRIME_CODE_2021_05_11_31/dev-python-env-fprime/lib/python3.8/site-packages/fprime_gds/flask/app.py"", line 12, in <module>
+    import flask_restful
+  File ""FPRIME_CODE_2021_05_11_31/dev-python-env-fprime/lib/python3.8/site-packages/flask_restful/__init__.py"", line 14, in <module>
+    from flask.helpers import _endpoint_from_view_func
+ImportError: cannot import name '_endpoint_from_view_func' from 'flask.helpers' (FPRIME_CODE_2021_05_11_31/dev-python-env-fprime/lib/python3.8/site-packages/flask/helpers.py)
+
+[ERROR] Failed to run application: FPRIME_CODE_2021_05_11_31/dev-python-env-fprime/bin/python3 -u -m flask run --host 127.0.0.1 --port 5000. Error: FPRIME_CODE_2021_05_11_31/dev-python-env-fprime/bin/python3 stopped with code 2 sooner than 2 seconds.
+[INFO] Shutting down F prime due to error. Failed to run HTML GUI
+Read failure attempting reconnection. OSError: [Errno 9] Bad file descriptor
+```
+
+## How to Reproduce
+
+1. Install new F Prime
+2. Build Ref
+3. run `frpime-gds`
+
+## Expected Behavior
+Run GDS instead of failing to run.
+
+---------
+
+In my opinion it would be wise to add package version on GDS requirements shown below:
+https://github.com/nasa/fprime/blob/e1c243e43870d37aa75034f939aab765640cdfac/Gds/setup.py#L111-L117
+
+This will prevent unprecedented situations on update of third-party packages.
+The package versions could be updated manually after being checked by F Prime maintainers.",bug,https://github.com/nasa/fprime/issues/543
+Code coverage analysis causes unit test failures on Mac OS,"| | |
+|:---|:---|
+|**_F´ Version_**| 1.5.3 |
+|**_Affected Component_**| All |
+---
+## Problem Description
+
+On Mac OS, the following can occur:
+
+1. Build and run component unit tests successfully. Doing this runs code coverage analysis, which generates .gcda artifacts.
+2. Edit the component and/or the unit tests.
+3. Build and run the component unit tests again, causing the coverage analysis to be re-run. This time the code coverage analysis gets confused by the old .gcda artifacts, causing it to spew warnings and sometimes fail with a segmentation fault.
+
+A workaround is to manually wipe out the .gcda artifacts in the build cache, but this is inconvenient.
+
+## How to Reproduce
+
+Carry out the steps described above, on any component unit test. Do this on Mac OS. For some reason, the issue arises only on Mac OS and not on Linux.
+
+## Expected Behavior
+
+The code coverage analysis should not spew warnings and should not cause segmentation faults or other apparent test failures.
+",bug,https://github.com/nasa/fprime/issues/368
+Remove Dead CMake Targets,"| | |
+|:---|:---|
+|**_F´ Version_**| |
+|**_Affected Component_**|  |
+---
+## Feature Description
+
+There are CMake targets that are currently unused.  `impl` and `testimpl` are the two prime candidates for removal
+
+## Rationale
+
+Clean-up dead code.  Reduce CMake target clutter.",non-bug,https://github.com/nasa/fprime/issues/2420
+Implement plugin architecture for the GDS,"| | |
+|:---|:---|
+|**_F´ Version_**| |
+|**_Affected Component_**| GDS |
+---
+## Feature Description
+
+Users may sometimes need to extend/modify the capabilities of the GDS, e.g. to add some custom processing for packets etc...
+This requires to fork the GDS. We want to have an architecture that allows users to easily write plugins, e.g. with [pluggy](https://github.com/pytest-dev/pluggy)
+
+## Rationale
+
+Easily extend the F´ GDS
+",non-bug,https://github.com/nasa/fprime/issues/2268
+Gap-identification vulnerability for file transfers,"## Feature Description
+
+Modify the ""Sequence ID"" field in the ""File Packet Header"" to be ""Transaction ID"" rather than a monotonically increasing counter. This would bring the protocol closer to the CFDP inspiration upon which it was written. The ""Transaction ID"" would enable the receiver to group packets of the same file together and permit the receiver to hold on to multiple file transactions that might be waiting for completion.
+
+## Rationale
+
+Currently, file packets are stamped with a ""Sequence ID"", which starts at 0 for the Start packet, increments to 1 for the first file data packet, then continues to count. This permits the receiver to order packets properly and identify gaps. However it is not robust.
+
+### Gap Identification Failure
+Let's explore an example where two files are telemetered that have the same size (which is a common activity) back to back. Each file has 4 packets (1 start, 2 data, 1 end).  Assume packets 3 and 4 of file-1 and packets 1 and 2 of file-2 are dropped. This would create the following packet assembly:
+ - File-1, packet-1 (START)
+ - File-1, packet-2 (DATA)
+ - File-2, packet-3 (DATA)
+ - File-2, packet-4 (END)
+
+This would be happily reassembled, then fail checksum at file validation. 
+
+### Dropped START Packet
+Continuing the above example, the receiver would have zero clue that File-2 was sent in that it never received it's destination file name.  This would be a silent failure and the receiver would not be able to inform the sender of any evidence of this file.
+
+### Redundant with Byte Offset/Data Length 
+The ordering of file data packets is achieved with the byte offset and data length field and a sequence ID counter is not required.
+
+## Conclusion
+I have enumerated two issues why a unique transaction ID would be superior than a monotonic counter. I'm sure there are additional benefits to such a feature that I have missed. I do not think this would be an outlandish change in the protocol or the code. Hopefully this helps.
+
+P.S. Maybe just deploy Type-2 CFDP and solve all the problems :-D",non-bug,https://github.com/nasa/fprime/issues/2223
+cookiecutter exceptions RepositoryNotFound,"| | |
+|:---|:---|
+|**_F´ Version_**| 0b669e108b43bc61c699acf4925ac783fbdc7f12 |
+|**_Affected Component_**|  N/A |
+---
+## Problem Description
+
+Cannot create a new component with the fprime utility.
+
+## How to Reproduce
+
+1. fprime-util generate
+2. fprime-util new --component native
+
+## Expected Behavior
+
+Expected to be prompted for information regarding new component. Instead, I got these errors
+
+```
+fprime-util new --component native
+[WARNING] Failed to find settings file: /home/ortega/abc/fprime/settings.ini
+[WARNING] **** fprime-util new is prototype functionality ****
+[INFO] Cookiecutter source: using builtin
+
+Traceback (most recent call last):
+  File ""/home/ortega/env/abc-venv/bin/fprime-util"", line 8, in <module>
+    sys.exit(main())
+  File ""/home/ortega/env/abc-venv/lib/python3.8/site-packages/fprime/util/__main__.py"", line 14, in main
+    return fprime.util.build_helper.utility_entry(args=sys.argv[1:])
+  File ""/home/ortega/env/abc-venv/lib/python3.8/site-packages/fprime/util/build_helper.py"", line 155, in utility_entry
+    runners[parsed.command](build, parsed, cmake_args, make_args)
+  File ""/home/ortega/env/abc-venv/lib/python3.8/site-packages/fprime/util/cli.py"", line 112, in template
+    return new_component(build.deployment, parsed.platform, parsed.verbose, build)
+  File ""/home/ortega/env/abc-venv/lib/python3.8/site-packages/fprime/fbuild/interaction.py"", line 265, in new_component
+    cookiecutter(source, extra_context={""component_namespace"": deployment.name})
+  File ""/home/ortega/env/abc-venv/lib/python3.8/site-packages/cookiecutter/main.py"", line 67, in cookiecutter
+    repo_dir, cleanup = determine_repo_dir(
+  File ""/home/ortega/env/abc-venv/lib/python3.8/site-packages/cookiecutter/repository.py"", line 131, in determine_repo_dir
+    raise RepositoryNotFound(
+cookiecutter.exceptions.RepositoryNotFound: A valid repository for ""/home/ortega/env/abc-venv/lib/python3.8/site-packages/fprime/fbuild/../cookiecutter_templates/cookiecutter-fprime-component"" could not be found in the following locations:
+/home/ortega/env/abc-venv/lib/python3.8/site-packages/fprime/fbuild/../cookiecutter_templates/cookiecutter-fprime-component
+/home/ortega/env/abc-venv/lib/python3.8/site-packages/fprime/fbuild/../cookiecutter_templates/cookiecutter-fprime-component
+```",bug,https://github.com/nasa/fprime/issues/1201
+Make GDS enums store their sizes correctly,This issue is documented here: https://github.com/fprime-community/fprime-tools/issues/17.,non-bug,https://github.com/nasa/fprime/issues/2200
+CMake System Uses `REALPATH` in `normalize_paths` Incorrectly,"| | |
+|:---|:---|
+|**_F´ Version_**| |
+|**_Affected Component_**|   |
+---
+## Problem Description
+
+When `REALPATH` is used below, but no where else....then building only functions when building within a realpath.
+
+https://github.com/nasa/fprime/blob/6641547e7ea8ec7593f7055cd2d5ff1e4acea990/cmake/utilities.cmake#L204",bug,https://github.com/nasa/fprime/issues/2449
+Multi-field Command Validation ,"| | |
+|:---|:---|
+|**Version**| 3.3.2 |
+|**Component**| GDS |
+---
+## Problem Description
+
+When sending a command with the ground station, validation always returns the cursor to the first field, even if the error is in a subsequent field.  For example, when first filling out the fields, after every number typed, you must click on the field again to type the next digit.
+
+## How to Reproduce
+
+1. Create a command with a structure containing at least 3 values.
+2. Click on the second field and type a number.
+3. Note that cursor is placed in the first field.
+4. Clear all fields
+5. Type a number in first field.
+6. Type a number in the second field.
+7. Note that cursor is placed in the first field again.
+![image](https://github.com/fprime-community/fprime-gds/assets/9815373/ee6c6359-1297-4a5e-bf6a-0011bc74edf3)
+
+## Expected Behavior
+
+The validation should not move the cursor from the field it is in.  It should not matter which field you're typing in first, and it absolutely shouldn't require N clicks to type an N-digit number.
+
+As requested in: https://github.com/fprime-community/fprime-gds/issues/143
+",bug,https://github.com/nasa/fprime/issues/2284
+Inconsistent license,"The top level has a LICENCE file and a NOTICE file that claim different license (BSD, Apache). Please clarify.",bug,https://github.com/nasa/fprime/issues/1904
+Code coverage analysis does not work as expected for autocoded port C++,"When testing code generation for ports, the F Prime build system does not provide coverage analysis for the generated port code. See https://github.com/nasa/fprime/pull/1852.",bug,https://github.com/nasa/fprime/issues/1862
+Create scala data structure for dictionary,"| | |
+|:---|:---|
+|**_F´ Version_**| |
+|**_Affected Component_**|  |
+---
+## Feature Description
+
+As part of #2263, one thing we definitely need to do is compute the dictionary for each topology. We can start by first creating a scala data structure for the dictionary
+",non-bug,https://github.com/nasa/fprime/issues/2274
+Effeciency Improvements in FPP/CMake Integration,"| | |
+|:---|:---|
+|**_F´ Version_**| |
+|**_Affected Component_**|  |
+---
+## Feature Description
+
+Further improve the speed of FPP and CMake integration.
+
+## Rationale
+
+Try to cut down overhead of FPP.",non-bug,https://github.com/nasa/fprime/issues/1170
+Defaults for `yes`/`no` New Questions,"| | |
+|:---|:---|
+|**_F´ Version_**| |
+|**_Affected Component_**|  |
+---
+## Feature Description
+
+`yes` / `no` questions in `fprime-util new` should come with defaults just as the cookiecutter questions do.",non-bug,https://github.com/nasa/fprime/issues/2192
+No rule to make target 'Ref_SignalGen_testimpl' with fprime-util impl --ut in tutorial,"| | |
+|:---|:---|
+|**_F´ Version_**| 85fa25b |
+|**_Affected Component_**| fprime-util, tutorial  |
+---
+## Problem Description
+`fprime-util impl --ut` fails on vanilla tutorial installation:
+```
+(fprime-venv) user@computer /localdata2/user/fprime1/fprime/Ref/SignalGen % fprime-util impl --ut
+[WARNING] Failed to find settings file: /localdata2/user/fprime1/fprime/Ref/settings.ini
+make: *** No rule to make target 'Ref_SignalGen_testimpl'.  Stop.
+[CMAKE] CMake failed to detect target, attempting CMake cache refresh and retry
+make: *** No rule to make target 'Ref_SignalGen_testimpl'.  Stop.
+[ERROR] CMake erred with return code 2
+```
+
+
+## How to Reproduce
+
+1. Fresh install as per INSTALL.md (functioning HTML GUI)
+2. Getting started tutorial as per Tutorial.md, skipping raspberry pi build
+```
+cd fprime/Ref
+fprime-util generate
+cd fprime/Ref/SignalGen
+fprime-util impl
+```
+(Runs successfully to 100%, generates -template files)
+3. Attempt to generate unit test implementation stubs
+```
+fprime-util impl --ut
+```
+
+## Expected Behavior
+
+Stubbed implementation files for the unit tests are created.
+",bug,https://github.com/nasa/fprime/issues/1195
+Github Actions CI Running Out of Memory,"| | |
+|:---|:---|
+|**_F´ Version_**| devel |
+|**_Affected Component_**|  CI |
+---
+## Problem Description
+
+CI is running out of memory during the compile stage.  This is the cause of various random crashes.",bug,https://github.com/nasa/fprime/issues/547
+startTasks for comm instance in Ref topology invokes startSocketTask incorrectly,"| | |
+|:---|:---|
+|**_F´ Version_**| v3.0.0 |
+|**_Affected Component_**| Ref, TcpClient |
+---
+## Problem Description
+
+The `Ref` topology has a `startTasks` for the `comm` instance (`Drv.TcpClient`, an implementation of the `Drv.ByteStreamDriverModel`). This [`startTasks` snippet](https://github.com/nasa/fprime/blob/313ef0556baec4a981f03e66de64d9193a84b867/Ref/Top/instances.fpp#L252-L264) invokes [`SocketReadTask::startSocketTask()`](https://github.com/nasa/fprime/blob/313ef0556baec4a981f03e66de64d9193a84b867/Drv/Ip/SocketReadTask.hpp#L52-L56) (as [inherited by `Drv.TcpClient`](https://github.com/nasa/fprime/blob/devel/Drv/TcpClient/TcpClientComponentImpl.hpp#L23)). [The second argument to the `startSocketTask()` in the `Ref` snippet is an enumeration](https://github.com/nasa/fprime/blob/313ef0556baec4a981f03e66de64d9193a84b867/Ref/Top/instances.fpp#L260) when it should be [a boolean for reconnection](https://github.com/nasa/fprime/blob/313ef0556baec4a981f03e66de64d9193a84b867/Drv/Ip/SocketReadTask.hpp#L53).
+
+## How to Reproduce
+
+Build with `-Werror=int-in-bool-context`.
+
+```
+/media/psf/Home/projects/cadre/repos/cadre-fsw/CadreSimDeployment/build-fprime-automatic-native/CadreSimDeployment/Top/CadreSimDeploymentTopologyAc.cpp: In function ‘void CadreSimDeployment::{anonymous}::startTasks(const CadreSimDeployment::TopologyState&)’:
+/media/psf/Home/projects/cadre/repos/cadre-fsw/CadreSimDeployment/build-fprime-automatic-native/CadreSimDeployment/Top/CadreSimDeploymentTopologyAc.cpp:883:11: error: enum constant in boolean context [-Werror=int-in-bool-context]
+  883 |           );
+      |           ^
+```
+
+## Expected Behavior
+
+I'm guessing passing `true` for the `reconnect` argument.",bug,https://github.com/nasa/fprime/issues/1213
+Generic F´ Util Integration Tests,"| | |
+|:---|:---|
+|**_F´ Version_**| devel |
+|**_Affected Component_**| `fprime-util`  |
+---
+## Feature Description
+
+Add some integration tests for `fprime-util` features and integrate them into the system.  This can augment the older build steps.
+
+## Rationale
+
+`fprime-util` has grown to be a key tool and should have a test suite overlooking its CLI.
+",non-bug,https://github.com/nasa/fprime/issues/311
+Rules Testing for Sequence Dispatcher,"| | |
+|:---|:---|
+|**_F´ Version_**| |
+|**_Affected Component_**|  |
+---
+## Feature Description
+
+Add rules based testing for sequence dispatcher.",non-bug,https://github.com/nasa/fprime/issues/2875
+readme,"| | |
+|:---|:---|
+|**_F´ Version_**| |
+|**_Affected Component_**|  |
+---
+## Feature Description
+
+A quick description of the requested feature.
+
+## Rationale
+
+A rationale for why the feature should be implemented in F´.
+
+adicionar versão mais especifica. 
+![image](https://github.com/nasa/fprime/assets/43853142/3bfdd87d-5c9c-4c73-bd1e-9611e7316a80)
+
+",non-bug,https://github.com/nasa/fprime/issues/2469
+Add A CITATION.cff File For Citing This Project,"| | |
+|:---|:---|
+|**_F´ Version_**|devel |
+|**_Affected Component_**| None |
+---
+## Feature Description
+
+GitHub recently announced [support for citations](https://github.blog/2021-08-19-enhanced-support-citations-github/) using  `ruby-cff`. In order to add a citation for F' we just need to create a `CITATION.cff` file.
+
+I have a basic one I can add:
+```yaml
+cff-version: 1.2.0
+message: ""If you use this software, please cite it as below.""
+authors:
+title: ""F': A Flight-Proven, Multi-Platform, Open-Source Flight Software Framework""
+url: ""https://github.com/nasa/fprime""
+```
+
+but I've left the authors blank. We could add the authors listed [on this paper](https://digitalcommons.usu.edu/cgi/viewcontent.cgi?article=4140&context=smallsat).
+
+## Rationale
+
+We make it easier for users to cite F' thus bolstering the recognition of the project and boosting the reference count on sites like Google Scholar. This could have potential benefit when making a business case for F', recognizes the work made by contributors, and making it easier for people to reference the project is just nice.",non-bug,https://github.com/nasa/fprime/issues/946
+i used to get some kind of installation error ,"| | |
+|:---|:---|
+|**_F´ Version_**| |
+|**_Affected Component_**|   |
+---
+## Problem Description
+
+i used to get some kind of installation error 
+## How to Reproduce
+
+1. 
+2.
+3.
+
+## Expected Behavior
+
+A description of the expected behavior.
+",bug,https://github.com/nasa/fprime/issues/2283
+PolyDb does not compile if F64 or F32 is turned off,"| | |
+|:---|:---|
+|**_F´ Version_**| |
+|**_Affected Component_**|   |
+---
+## Problem Description
+
+A description of the problem with sufficient detail to understand the issue.
+
+## How to Reproduce
+
+1. 
+2.
+3.
+
+## Expected Behavior
+
+A description of the expected behavior.
+",bug,https://github.com/nasa/fprime/issues/1709
+Integrate JSON Dictionary autocoding in the CMake system,"| | |
+|:---|:---|
+|**_F´ Version_**| |
+|**_Affected Component_**|  |
+---
+## Feature Description
+
+We have fpp-to-dict to generate a JSON dictionary. This issue is to hook it in the CMake system to generate the JSON dictionary on every build.
+
+https://github.com/nasa/fprime/issues/2263
+",non-bug,https://github.com/nasa/fprime/issues/2591
+Create Command Interface,"| | |
+|:---|:---|
+|**_F´ Version_**| |
+|**_Affected Component_**|  |
+---
+## Feature Description
+
+Make an interface out of the standard Command ports. See #2255 for an example interface change set.
+
+The following three ports should be put into an interface at `Fw/Interfaces/CommandInterface.fppi` such that component implementers can quickly use them.
+
+https://github.com/nasa/fprime/blob/a73bff28617b96736c0e3e222e4c6e1dea1c6f5e/Ref/SignalGen/SignalGen.fpp#L41-L48
+",non-bug,https://github.com/nasa/fprime/issues/2586
+Include *ComponentBase classes in Doxygen documentation,"| | |
+|:---|:---|
+|**_F´ Version_**| |
+|**_Affected Component_**|  |
+---
+## Feature Description
+Some base classes aren't displayed in the Doxygen output (ex: ComLoggerComponentBase)
+
+",non-bug,https://github.com/nasa/fprime/issues/1989
+Add Baremetal Compile Step To CI Pipeline,"| | |
+|:---|:---|
+|**_F´ Version_**|v3 |
+|**_Affected Component_**| Baremetal & CI |
+---
+## Feature Description
+
+> Seems like we should add a baremetal compile to CI to prevent this style of error.
+
+_Originally posted by @LeStarch in https://github.com/nasa/fprime/pull/1293#issuecomment-1054470039_
+
+## Rationale
+
+There are some simple bugs like those found in pull requests #1292 and #1293 that could've been easily caught if there was a baremetal compilation step in the CI pipeline.
+",non-bug,https://github.com/nasa/fprime/issues/1294
+Add command parameter validation,"| | |
+|:---|:---|
+|**_F´ Version_**| |
+|**_Affected Component_**|  |
+---
+## Feature Description
+
+Add command parameter ranges and validation to FPP, component AC, and sequence compiler.
+
+## Rationale
+
+A rationale for why the feature should be implemented in F´.
+",non-bug,https://github.com/nasa/fprime/issues/1867
+Refactor README.md,"| | |
+|:---|:---|
+|**_F´ Version_**| |
+|**_Affected Component_**|   |
+---
+## Problem Description
+
+Users are discovering F´ via the github repo directly (as opposed to the documentation landing page).  This is causing difficulty in finding and running the installation instructions.
+
+We should look into refactoring the README so it has a similar flow (or links to) our documentation.",bug,https://github.com/nasa/fprime/issues/1617
+Add history check for value of enum serializable class rather than enum class instance,"| | |
+|:---|:---|
+|**_F´ Version_**| 2.0 |
+|**_Affected Component_**| All |
+---
+## Feature Description
+
+When unit testing and checking for the receipt of an external enumeration class in the history of telemetry or events, the user is required to create an instance of the class, assign a value to it, and then pass the instance to the checking function.
+
+Proposal would be to add an overloaded version of the checker such that the enumeration value can be checked.
+
+(Trying to find an example in the F Prime code. Ran in to this on a project using F Prime.)
+
+## Rationale
+
+Makes unit test code less cluttered.
+",non-bug,https://github.com/nasa/fprime/issues/1057
+"Time::set(0,0) shouldn't override the timebase and context","| | |
+|:---|:---|
+|**_F´ Version_**| |
+|**_Affected Component_**|   |
+---
+## Problem Description
+
+A description of the problem with sufficient detail to understand the issue.
+
+## How to Reproduce
+
+The Time::Set method overrides the classes already established time base and context values. The set function shouldn't be setting member variables outside the scope of the arguments provided. 
+
+Proposed change - Line 25 of Time.cpp should be this:
+```
+void Time::set(U32 seconds, U32 useconds) {
+    this->set(this->m_timeBase, this->m_timeContext, seconds, useconds);
+}
+```
+
+Current implementation:
+```
+void Time::set(U32 seconds, U32 useconds) {
+    this->set(TB_NONE,0,seconds,useconds);
+}
+```
+
+This also applies for the `set(timebase,sec,usec)` method as well, shouldn't override the context:
+```
+void Time::set(TimeBase timeBase, U32 seconds, U32 useconds) {
+    this->set(timeBase,0,seconds,useconds);
+}
+```",bug,https://github.com/nasa/fprime/issues/1090
+Integration Test API: Better Timeout implementation,"Presently timeouts are using the signal library and throw an exception to end the search. This timeout behavior can be modified very easily by changing the [__search_test_history](https://github.com/nasa/fprime/blob/6cd4c8007a7f562d5b0b616eb494270ac5c7b95d/Gds/src/fprime_gds/common/testing_fw/api.py#L911) method. All searches use this method to accomplish scoping, logging and history substitution. Changing the timeout to something like below  would be better.
+
+~~~~{.python}
+# in IntegrationTestAPI's __search_test_history method on ~line 912 of api.py
+if timeout:
+    self.__log(name + "" now awaiting for at most {} s."".format(timeout))
+    end_time = time.time() + timeout
+    while True:
+        new_items = history.retrieve_new()
+        for item in new_items:
+            if searcher.incremental_search(item):
+                return searcher.get_return_value()
+        if time.time() >= end_time:
+            msg = name + "" timed out and ended unsuccessfully.""
+            self.__log(msg, TestLogger.YELLOW)
+            break
+        time.sleep(0.1)
+else:
+    self.__log(name + "" ended unsuccessfully."", TestLogger.YELLOW)
+return searcher.get_return_value()
+~~~~
+
+**NOTE**: The above code hasn't been tested and may have issues if the system time changes: `time.time()`.",non-bug,https://github.com/nasa/fprime/issues/2645
+Codebase compliance with coding rules standards & creation of a compliance matrix,"| | |
+|:---|:---|
+|**_F´ Version_**| latest |
+|**_Affected Component_**| Industrial Coding Rules compliance |
+---
+## Feature Description
+
+The project is currently not compliant with industry standard coding rules such as [AUTOSAR](https://www.autosar.org/fileadmin/standards/adaptive/18-03/AUTOSAR_RS_CPP14Guidelines.pdf), MISRA, JSC++.
+This can lead to reliability and security issues for end users. I propose to make the project code compliant with these standards and create a compliance matrix to track compliance.
+
+If rules are not followed, a rational justification must be provided so that users can defend the integration of the project into their product delivered to a prime contractor.
+
+## Rationale
+
+Making the code compliant with commonly used industry standards for coding rules will ensure the reliability and security of the project for end users.
+It also allows contributors to better understand the quality requirements of the project and facilitates the integration of contributions from different developers.
+
+Creating a compliance matrix will track compliance and ensure that the project meets the required coding standards. It will also demonstrate to end users and contributors that the project follows industry best practices.
+
+In addition, it will allow users to deliver products to prime contractors that follow these specific coding policy standards, giving them confidence in the delivered product.
+
+By ensuring that the code conforms to these standards, users can be confident that they can use FPrime because it meets the necessary quality requirements and avoids the risk of rejection by prime contractors.
+",non-bug,https://github.com/nasa/fprime/issues/1861
+`SystemResources` tested within the Ref integration test suite,"| | |
+|:---|:---|
+|**_F´ Version_**| 3.1.x |
+|**_Affected Component_**| Ref integration test suite |
+---
+## Feature Description
+
+It would be great to have an integration test that verifies the system resources in the Ref integration test suite. These tests would verify:
+
+- The framework/project version as described in `git describe --tags --always` for example.
+- Memory usage (MEMORY_TOTAL, MEMORY_USED, NON_VOLATILE_TOTAL, NON_VOLATILE_FREE) greater than a certain value, 1KB for example.
+- A number of CPUs greater than or equal to 1
+- A percentage of CPUs greater than 1%.
+
+## Rationale
+
+From a system perspective, it is interesting to:
+
+- monitor the memory consumption and CPU load according to the system's operating modes.
+- verify that it is the correct version of the system under test
+- check that the number of CPUs used is correct and that there are no underutilized or overutilized CPUs.
+
+It also shows the user how to create predicates/assertions on specific data structure fields received in telemetry messages.
+",non-bug,https://github.com/nasa/fprime/issues/1561
+File Downlink PermissionError crashes the GDS,"| | |
+|:---|:---|
+|**_F´ Version_**| |
+|**_Affected Component_**|   |
+---
+## Problem Description
+
+If you donwnlink a file and it fails, for example due to permissions issues on the host, the GDS green dot will change to a red x and not recover.
+
+## How to Reproduce
+1. Have another user downlink a file so that /tmp/fprime-downlink is only writable by that user
+2. Attempt file downlink as a new user
+3. Observe red x in GDS window
+
+## Expected Behavior
+Generate an EVR that reports the permission issue and keeps running
+Can fprime-gds be configured to either (1) make its directories group writable by default or (2) use a user's home directory for downlink? Otherwise, we all need sudo to keep changing permissions depending on who is downlinking
+
+",bug,https://github.com/nasa/fprime/issues/1970
+Autogenerate separate `Tester::connectPorts` source file,"| | |
+|:---|:---|
+|**_F´ Version_**|2.0 |
+|**_Affected Component_**|  |
+---
+## Feature Description
+
+Currently, `Tester::connectPorts()` is generated by the `generate impl --ut` and placed in the `Tester.cpp` file. This becomes a maintenance annoyance and causes asserts if it's not corrected if a new port is added.
+
+The proposal would be to generate this function into a separate .cpp file that would be treated like the other unit test files and generated each time the test is compiled. 
+
+## Rationale
+
+It makes maintaining unit tests a lot easier, and it isn't intuitive to know you have to go update this function when you add a port.
+",non-bug,https://github.com/nasa/fprime/issues/934
+"If cpp files depend on fpp but are listed in reverse order, compile fails","| | |
+|:---|:---|
+|**_F´ Version_**| 3.4.0 |
+|**_Affected Component_**| fprime-util |
+---
+## Problem Description
+
+This order is required if the cpp file(s) depend on class(es) that fpp generates.
+
+set(SOURCE_FILES
+    ""${CMAKE_CURRENT_LIST_DIR}/FrameHeaderSerializable.fpp""
+    ""${CMAKE_CURRENT_LIST_DIR}/MyComponent.fpp""
+    ""${CMAKE_CURRENT_LIST_DIR}/MyComponent.cpp""
+    ""${CMAKE_CURRENT_LIST_DIR}/MyComponent.hpp""
+)
+
+## How to Reproduce
+
+## Expected Behavior
+
+The build system should auto-code what is required first.
+",bug,https://github.com/nasa/fprime/issues/2488
+FW_NO_ASSERT does not work,"| | |
+|:---|:---|
+|**_F´ Version_**| |
+|**_Affected Component_**|   |
+---
+## Problem Description
+
+Turning off asserts by setting assert level to FW_NO_ASSERT causes compilation issues with all the classes subclassing AssertHook.
+
+We have 2 options:
+1. Conditionally compile all classes subclassing AssertHook
+2. Always define AssertHook class, and disable asserts at the macro level",bug,https://github.com/nasa/fprime/issues/1706
+GDS decoding ENUM events incorrectly,"| | |
+|:---|:---|
+|**_F´ Version_**| 1.5> |
+|**_Affected Component_**|All   |
+---
+## Problem Description
+
+Originally reported by @bcmetz 
+
+GDS crashes when string_format has `%d`
+
+The enum definition xml
+```
+<?xml version=""1.0"" encoding=""UTF-8""?>
+<?oxygen RNGSchema=""file:../../Autocoders/Python/schema/ISF_Type_Schema.rnc"" type=""compact""?>
+<enum namespace = ""Backplane"" name=""PowerState"">
+    <comment>Enum of different supported signal types.</comment>
+    <item name=""OFF"" value=""0""/>
+    <item name=""ON"" value=""1""/>
+</enum>
+```
+
+arg xml for the event:
+```
+<event id=""0"" name=""POWERED"" severity=""ACTIVITY_HI"" format_string = ""Instrument has been powered %d"" >
+            <comment>
+            Power state of the instrument
+            </comment>
+            <args>
+                <arg type=""Backplane::PowerState"" name=""State""> </arg>
+	   </args>
+</event>
+```
+When the bp_C4D.POWER, ON command is sent, the telemetry is pushed correctly:
+![image](https://user-images.githubusercontent.com/35859004/106947037-be839780-66de-11eb-91a7-9d1e631d6a13.png)
+
+But GDS python code crashes:
+```
+File ""fprime_gds/flask/events.py"", line 66, in get
+    event.template.format_str % tuple([arg.val for arg in event.args]),
+TypeError: %d format: a number is required, not str
+```
+
+## Expected Behavior
+
+The Event should be printed correctly in the event table in the GDS GUI
+",bug,https://github.com/nasa/fprime/issues/349
+"""fprime-util impl"" not working for MathReceiver","| | |
+|:---|:---|
+|**_Python Version_**|3.6.9|
+|**_CMake Version_**|3.10.2|
+|**_Commit_**|08b535c |
+|**_Affected Component_**| MathReceiver  |
+---
+## Problem Description
+
+I'm trying to run `fprime-util impl` in `/Ref/MathReceiver` but I keep running into this error:
+
+![image](https://user-images.githubusercontent.com/26328810/103983238-e967e380-5152-11eb-9abf-c7eda5f541cb.png)
+
+I checked the folder and it seems to create a `MathReceiverComponentImpl.cpp-template` file but it's empty.
+
+![image](https://user-images.githubusercontent.com/26328810/103984103-811a0180-5154-11eb-8b9c-d671e0b2a12a.png)
+
+Additionally, when using `fprime-util impl` in `/Ref/MathSender` the command keeps generating this line in `/Ref/MathSender/MathSenderComponentImpl.hpp`:
+
+![image](https://user-images.githubusercontent.com/26328810/103983429-3a77d780-5153-11eb-8f77-b5e9e661811b.png)
+
+on line 16.
+
+I was just wondering if this should be `#include ""Ref/MathSender/MathSenderComponentImpl.hpp` instead, given `#include ""Ref/MathSender/MathSenderComponentAc.hpp` doesn't exist.
+
+## How to Reproduce
+
+I followed the [MathComponent tutorial](https://github.com/nasa/fprime/blob/devel/docs/Tutorials/MathComponent/Tutorial.md). Everything works up to the part where I have to run `fprime-util impl` in the `/Ref/MathReceiver` folder.
+
+## Expected Behavior
+
+The proper generation of `MathReceiverComponentImpl.hpp-template` and `MathReceiverComponentImpl.cpp-template` when running `fprime-util impl`. 
+",bug,https://github.com/nasa/fprime/issues/327
+[GDS] StandardPipeline not correctly disconnected: `50050: Address already in use`,"### Discussed in https://github.com/nasa/fprime/discussions/2519
+
+<div type='discussions-op-text'>
+
+<sup>Originally posted by **SMorettini** February  7, 2024</sup>
+Since I started using fprime-gds, I've encountered the following error when starting it multiple times in a row:
+
+```
+[ERROR] Error with address/port '0.0.0.0:50050' : [Errno 98] Address already in use
+```
+
+This error doesn't occur every time but it seems to happen at least one out of ten times. My usual workaround is to change the `--tts-port`.
+
+Upon investigation today, I found out what I suspected to be the problem. In `flask/app.py`, a pipeline is created but the `disconnect` method is never called. I attempted to add the call to `disconnect` but couldn't find a way to do so.
+
+The pipeline is created only once when starting `fprime-gds`. Any request uses the same pipeline object. As far as I understand, Flask doesn't support the design of using the same object across all API requests. According to Flask's suggested design, each API function should create a new connection to the `TCPServer`. Therefore, Flask doesn't provide a way to register a function to clean up or teardown a global object.
+
+I tried to register a `signal_handler` but it seems that Flask gives very little time for any signal handling, forcing the server to close too quickly and not allowing the `disconnect` method to complete execution.
+
+Has anyone else encountered the `Address already in use` error? How did you solve it? Any ideas on how we could change fprime-gds to close more cleanly?</div>",bug,https://github.com/nasa/fprime/issues/2520
+Actually Set to Bug,"| | |
+|:---|:---|
+|**_F´ Version_**| |
+|**_Affected Component_**|   |
+---
+## Problem Description
+
+This randomly occurs (from CI):
+
+```
+Error:  Expected CMake variable FPRIME_FRAMEWORK_PATH to be set to '/Users/runner/work/fprime/fprime', was actually set to '/Users/runner/work/fprime/fprime
+'. This is usually caused by updating the settings.ini file without purging and regenerating the accompanying build cache.
+```
+
+As seen above, this could be fixed by stripping newlines before comparing.",bug,https://github.com/nasa/fprime/issues/1381
+MagicDraw reports missing resources,"Similar to issue #102, MagicDraw reports missing files:
+```
+The following resources are needed for this project, but missing in your MagicDraw installation. We recommend that you Upgrade your installation, installing missing resources.
+
+Missing resources:
+BuffGndSockIf.mdxml (missing)
+PassiveTextLoggerModule.mdxml (missing)
+GndIfModule.mdxml (missing)
+SSCAEProjectUsageIntegrityProfile.mdzip (missing)
+```
+
+Also note the extra presence of `SSCAEProjectUsageIntegrityProfile.mdzip`. Is this file restricted? ",bug,https://github.com/nasa/fprime/issues/109
+FPP Work To Go,"| | |
+|:---|:---|
+|**_F´ Version_**| |
+|**_Affected Component_**|  |
+---
+## Feature Description
+
+The following improvements for FPP need to be made and are bucketed for release stages.
+
+## Needed Before RC1
+- [x] Add SBT to CMake setup items
+- [x] Fix Udp, TcpServer, TcpClient, and LinuxTime UTs
+- [x] Add impl, impl-test
+- [x] Review coverage targets, leak targets
+- [x] Make Top a module, separate from exe, and Ref
+- [x] Supply FPP all FPP files from folder in one pass
+- [x] Autocalculate locs
+- [x] Switch for ""util"" targets
+- [x] Deployment based targets
+- [x] Switch back to cmake install for installation, or fix up package-gen
+- [x] Clean-up options
+- [x] fpp-locs efficiency.
+- [x] FPP tools from path switch, with repo install backup.  Check versions to ensure correct hash run.
+- [x] Test
+
+## Post RC1 Before `v3.0.0`
+- [x] Driver models. -- @bocchino agreed to look into this
+- [x] Locs build without undefined targets
+- [x] Override fpp and aconstants.
+- [x] TODOs, Comments/docs cleanup
+- [x] Update `fprime-util` for `-DBUILD_TESTING=ON` and other v3.0.0 changes
+- [x] Re-enable CMake UTs
+- [x] Iron out minor build slowness
+- [x] Can we compile external projects? -- yes!
+- [x] Discuss `start` inteface
+- [x] `fpp-check -u` unconnected ports.  See: https://github.com/fprime-community/fprime-tools/pull/25
+- [x] Documentation: 
+- [x] Documentation:
+- [x] Clean-up and purge .do, mdxml, and other cruft. Delete not deprecate.
+
+## After `v3.0.0`
+- [x] `fpp-locs-uses` informative.  Introspect locations.",non-bug,https://github.com/nasa/fprime/issues/974
+Website rendering is broken,"| | |
+|:---|:---|
+|**_F´ Version_**| |
+|**_Affected Component_**|  website |
+---
+## Problem Description
+
+It appears the layout of https://nasa.github.io/fprime/ is broken. Investigating...
+
+Tried multiple browsers, getting the same broken layout
+",bug,https://github.com/nasa/fprime/issues/2538
+Remove Abnormal Constructors and Init Functions,"| | |
+|:---|:---|
+|**_F´ Version_**| |
+|**_Affected Component_**|   |
+---
+## Problem Description
+
+All components defining non-empty constructors and init functions need to be reformed.",bug,https://github.com/nasa/fprime/issues/1459
+Insufficient error handling,"| | |
+|:---|:---|
+|**_F´ Version_**| 1.5 |
+|**_Affected Component_**| Os |
+---
+## Feature Description
+
+We found a lot of assertions about pthread functions in [Queue.cpp](https://github.com/nasa/fprime/blob/devel/Os/Posix/Queue.cpp) and [Mutex.cpp](https://github.com/nasa/fprime/blob/devel/Os/Posix/Mutex.cpp).
+There assertions often follow some comments that claim this situation is dangerous.
+Besides, these pthread function like `pthread_cond_init` could fail in real world deployments.
+So there should be some error handling code about these functions.
+",non-bug,https://github.com/nasa/fprime/issues/433
+Use static allocation in OSAL,"| | |
+|:---|:---|
+|**_F´ Version_**| 3.3.2 |
+|**_Affected Component_**|  OSAL |
+---
+## Feature Description
+
+Right now, resource-owning OSAL APIs typically have a `POINTER_CAST m_handle` class member to hold a handle to the underlying OS resource. The resource is typically expected to be dynamically allocated in an initialization method, or in the case of Mutex in the constructor.
+
+Therefore, I'd suggest:
+1) Enforce static allocation across OSAL and document places where it's not possible.
+2) Do not expect the Mutex to allocate from the heap in the constructor (!!). This maybe should be filed as a bug.
+
+## Rationale
+
+Well, dynamic allocation in safety-critical software is a topic in itself, but from what I could understand F Prime tries to enforce doing dynamic allocation only in the initialization phase. However, some of the OSAL types potentially ""silently"" allocate from the heap during the operational phase, e.g., when reading a directory using Directory::open(), the glibc mallocs memory. 
+
+I think such a bug would not be introduced if the design enforced using only statically allocated memory in all OSAL, with exceptions where they can't be avoided (maybe `create_pthread`?). However, then it should be documented that the given function must only be used during the initialization phase.
+
+This may not be of big concern when a lot of RAM is available, but for deployments with a few hundred kilobytes of RAM this issue becomes relevant. It became relevant for me when implementing a port for Zephyr which often enforces static initialization throughout its APIs.
+
+## Suggested implementation
+
+I thought of _templating_ out the handle member, e.g.:
+```c++
+template <typename T>
+class Mutex {
+    public:
+        void lock(); //!<  lock the mutex
+        void unLock(); //!<  unlock the mutex
+
+    private:
+        T m_handle; //!<  Stored handle to mutex
+};
+``` 
+
+If templates are to be avoided, another option would be using _macros_, as in the case of `TaskIdRepr`:
+```c++
+#if defined(TGT_OS_TYPE_VXWORKS) || (FW_BAREMETAL_SCHEDULER == 1)
+    typedef int TaskIdRepr;
+#elif defined(TGT_OS_TYPE_LINUX) || defined(TGT_OS_TYPE_DARWIN)
+    typedef pthread_t TaskIdRepr;
+#endif
+
+class TaskId {
+  public:
+      TaskId();
+      ~TaskId();
+      bool operator==(const TaskId& T) const;
+      bool operator!=(const TaskId& T) const;
+      TaskIdRepr getRepr() const;
+  private:
+      TaskIdRepr id;
+};
+```
+
+## More details
+The affected APIs are: Mutex, Queue, File, Directory, Task, InterruptLock, and WatchdogTimer. In case of the Queue, its size would need to either be determined at compile time or the API would need to allow passing an external buffer. ",non-bug,https://github.com/nasa/fprime/issues/2298
+Add the TRL scale associated with the mastery of F´,"| | |
+|:---|:---|
+|**_F´ Version_**| |
+|**_Affected Component_**|  |
+---
+## Feature Description
+
+It would be great to have a TRL scale of key framework features, something like this:
+
+| | |
+|:---|:---|
+|**TRL 9** | Custom Autocoder |
+|**TRL 8** | Hub Pattern for TSP architecture|
+|**TRL 7** | Full control of memory management |
+|**TRL 6** | Custom serialization protocol |
+|**TRL 5** | Ability to write a custom integration test suite |
+|**TRL 4** | Adaptation of OSAL to exotic OS |
+|**TRL 3** | ... |
+|**TRL 2** | ... |
+|**TRL 1** | Math Tutorial |
+
+
+
+
+We could perhaps add next to TRLs some of the more common words encountered in skill assessment, such as unaware, aware, informed, capable, recognized, expert, guru.
+
+## Rationale
+
+This will allow stakeholders to
+
+- assess their maturity, their degree of competence with respect to the framework, and therefore the risk of taking this framework for a more or less complicated project
+- to set a learning objective to motivate and guide their learning.",non-bug,https://github.com/nasa/fprime/issues/1595
+Run CI on UH Cubesat,"| | |
+|:---|:---|
+|**_F´ Version_**| |
+|**_Affected Component_**|  |
+---
+## Feature Description
+
+https://github.com/fprime-community/fprime-artemis-cubesat/tree/dev
+
+To run on the Artemis Cubesat in CI",non-bug,https://github.com/nasa/fprime/issues/2203
+Math tutorial deployment naming issue ,"| | |
+|:---|:---|
+|**_F´ Version_**| |
+|**_Affected Component_**|   |
+---
+## Problem Description
+
+In the math component tutorial and reference, the deployment is named ""Deployment"". We would like to rename the deployment to ""MathDeployment"" to be more descriptive & to match hello world. 
+",bug,https://github.com/nasa/fprime/issues/2114
+Unit Test Error With FW_OBJECT_NAMES Set To Zero,"| | |
+|:---|:---|
+|**_F´ Version_**|v3.0.0 |
+|**_Affected Component_**| F Prime CodeGen  |
+---
+## Problem Description
+
+With `FW_OBJECT_NAMES` set to zero the generated Tester.cpp has an empty constructor:
+```cpp
+#if FW_OBJECT_NAMES == 1
+      BlinkerGTestBase(""Tester"", MAX_HISTORY_SIZE),
+      component(""Blinker"")
+#else
+      BlinkerGTestBase(MAX_HISTORY_SIZE),
+      component()
+#endif
+```
+
+but that constructor is not defined in the component's implementation:
+```cpp
+namespace TivaBlink {
+
+  class Blinker :
+    public BlinkerComponentBase
+  {
+
+    public:
+
+      // ----------------------------------------------------------------------
+      // Construction, initialization, and destruction
+      // ----------------------------------------------------------------------
+
+      //! Construct object Blinker
+      //!
+      Blinker(
+          const char *const compName /*!< The component name*/
+      );
+```
+
+The TesterBase.cpp also has the same issue:
+```cpp
+#if FW_OBJECT_NAMES == 1
+      Fw::PassiveComponentBase(compName)
+#else
+      Fw::PassiveComponentBase()
+#endif
+```
+
+This results in a build error when trying to compile the unit tests.
+
+## How to Reproduce
+
+1. I defined a component in FPP:
+```
+module TivaBlink {
+    @ Component for blinking a tiva launchpad's onboard led
+    passive component Blinker {
+        @ Schedule input port
+        sync input port schedIn: Svc.Sched
+    }
+}
+```
+
+2. In my FpConfig.hpp file I have:
+```cpp
+#define FW_OBJECT_NAMES                     0
+```
+
+> I pretty much copied the Arduino's [FpConfig.hpp](https://github.com/fprime-community/fprime-arduino/blob/master/config/FpConfig.hpp)
+
+3. Ran `fprime-util generate --ut`
+
+4. Ran `fprime-util impl --ut`
+
+5. Then ran `fprime-util build --ut`
+
+## Expected Behavior
+
+
+There's three approaches that I can think of to fix this:
+
+1. Add the empty default constructor to the component implementation and the parent ComponentBase.
+2. Have the `Blinker(const char *const compName);` constructor have a default argument: `Blinker(const char *const compName = """");`
+3. The simplest approach is to just change `component()` to `component("""")` and  `Fw::PassiveComponentBase()` to `Fw::PassiveComponentBase("""")` in the test stubs.
+",bug,https://github.com/nasa/fprime/issues/1301
+"GDS PktDecoder does not send out PktData, sends ChData instead","| | |
+|:---|:---|
+|**_F´ Version_**| pip lists fprime-gds as version 3.3.0 |
+|**_Affected Component_**|  fprime-gds |
+---
+## Problem Description
+
+According to the documentation of the `decode_api` function in `fprime_gds.common.decoder.pkt_decoder.PktDecoder`, it should send out instances of the `PktData` class to all those who register to it. However, it just sends out a list of `ChData` objects that make up that packet.
+
+## Expected Behavior
+
+Classes which register to the `PktDecoder` should receive `PktData` in their `data_callback` methods.
+",bug,https://github.com/nasa/fprime/issues/2521
+RPI CI Failing,"| | |
+|:---|:---|
+|**_F´ Version_**| |
+|**_Affected Component_**|   |
+---
+## Problem Description
+
+An update to the build runner causes the RPI CI to fail.  This is likely due to a compiler that has a newer version of libc then that of the OS it is running against.  Possible fixes:
+
+1. Update the RPI OS to the latest in hopes it has the newer libraries
+2. Pin the compiler to a specific version of Arm-GCC and thus pinning the libc version
+
+Both of the above strategies work but are not ideal.  Other solutions that might work (need to be investigated):
+
+1. ~Statically link libc~
+2. ~Inform GCC which version of libc to use~
+3. Create a `rootfs` for compilation against
+
+
+",bug,https://github.com/nasa/fprime/issues/1796
+ComQueue Enhancements,"| | |
+|:---|:---|
+|**_F´ Version_**| |
+|**_Affected Component_**|  ComQueue |
+---
+## Feature Description
+
+1. Ability to open/close/clear downlink queues 
+2. Ability to change downlink rate.
+
+## Rationale
+
+These features have proven to be invaluable on large scale flagship missions and I anticipate being import for future larger F-prime projects.  Regularly used both in testing and OPs.
+",non-bug,https://github.com/nasa/fprime/issues/2209
+Experiencing Problems Launching the GDS in a Cloned Project on a Separate User-Name (and Machine) ,"| | |
+|:---|:---|
+|**_F´ Version_**|  fprime-tools v3.2.0; fprime-gds v3.2.1a1
+|**_Affected Component_**| fprime-gds and cloned repos
+---
+## Problem Description
+
+Some context for this problem, albeit from a previous point of understanding, can be found in [this](https://github.com/nasa/fprime/issues/2142) issue. The short version is that my C&DH lead created a new F' project, generated and built it, made a components folder which was empty except for a README.txt, and pushed all of these changes to a team repository. When the lead cloned the repository, they were able to create deployments and run `fprime-gds` with no issues. When the rest of the team attempted to do the same, we got at error which looked similar to the following:
+
+<img width=""846"" alt=""Screenshot 2023-07-18 102526"" src=""https://github.com/nasa/fprime/assets/116765885/c86d993a-6818-4997-a385-d65baaf7b583"">
+
+We found this to be true regardless of our linux distribution, whether or not we were in the project's virtual environment (although interestingly I learned that, when using a different project's virtual environment, one could skirt around this issue and still access the correct project through the gds), our version of fprime-tools (between 3.2.0 and 3.2.1), our version fprime-gds (between 3.2.1a1 and 3.2.0), and what branch of the repository we were on. Ultimately, my team lead suggest we try having me make a new user with the same user name as him, which--after all of the F' dependencies were installed--worked perfectly well. 
+We had our suspicions that it might have been some hard-coded path dependent on the machine, but the username makes just as much sense. I made sure to check the F' User's Guide section on the F' development process, but couldn't find anything there about this. Is there a way to edit whatever is dependent on this username manually? This feels like something that would've come up for more people in the standard course of development, so maybe our project has extraneous factor we can't currently perceive.
+
+## How to Reproduce
+
+1. Have someone make an F' project, generate it, and build it.
+2. Have the same person commit all changes to a publicly-accessible repository.
+3. Have a different person clone the project, ensuring they are on an account with a different username than the person who made the project.
+4. Have that second person create, generate, and build in a new deployment for the project.
+5. Have that second person run the command `fprime-gds` within that deployment.
+
+## Expected Behavior
+
+The person trying to run the ground data system will get an error like the screenshot from above, informing them that a binary location does not exist.
+
+EDIT: In retrospect, it seems as though we did not investigate the different versions of fprime-tools and fprime-gds closely enough. What happened as best as I can reason is that the team lead--who was using fprime-tools v3.2.0 and fprime-gds v3.2.1a1--was able to successfully run the GDS when cloning projects both he had made and other people had made, because fprime-gds v3.2.1a1 appears backwards-compatible with fprime-gds v.3.2.0. However, neither a colleague nor I was able to successfully run the cloned project my team lead had made, seemingly because fprime-gds v3.2.0 is not forwards-compatible with fprime-gds v3.2.1a1. Once I created a new user for my installation of Ubuntu, the automatically installed versions for fprime-tools and fprime-gds matched those of my team-leads, hence giving the illusion that the variable of note was the name of the user, rather than the tool versions. 
+The version of fprime-tools, between v3.2.0 and v3.2.1, didn't have an impact on the ability of a given deployment to launch the GDS during our debugging, although the compiler did still given a warning about the mismatched versions when generating and building the deployment. 
+Also potentially of note, I had to install a previous version of flask--going from v2.3.2 to v2.2.3--to launch the GDS successfully; it also turned out that my team lead had v2.2.2 installed from a previous unrelated project, and changing this version was also necessary to fully solve the problem for my colleague. In the one case we built a deployment on a machine running flask v2.3.2, this did not impact the ability of machines running an earlier version of flask to rebuild the deployment and run the GDS themselves.",bug,https://github.com/nasa/fprime/issues/2145
