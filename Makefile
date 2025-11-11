@@ -10,11 +10,14 @@ endif
 UI_PORT ?= 7860
 SETFIT_PORT ?= 8000
 OLLAMA_PORT ?= 11434
+VECTOR_STORE_PORT ?= 8001
 UI_HOST ?= 0.0.0.0
 SETFIT_HOST ?= 0.0.0.0
 OLLAMA_HOST ?= 0.0.0.0
+VECTOR_STORE_HOST ?= 0.0.0.0
 OLLAMA_BASE_URL ?= http://localhost:11434
 SETFIT_BASE_URL ?= http://localhost:8000
+VECTOR_STORE_BASE_URL ?= http://localhost:8001
 
 # Environment setup target
 setup-env:
@@ -23,13 +26,17 @@ setup-env:
 		echo "UI_PORT=${UI_PORT}" > .env; \
 		echo "SETFIT_PORT=${SETFIT_PORT}" >> .env; \
 		echo "OLLAMA_PORT=${OLLAMA_PORT}" >> .env; \
+		echo "VECTOR_STORE_PORT=${VECTOR_STORE_PORT}" >> .env; \
 		echo "UI_HOST=${UI_HOST}" >> .env; \
 		echo "SETFIT_HOST=${SETFIT_HOST}" >> .env; \
 		echo "OLLAMA_HOST=${OLLAMA_HOST}" >> .env; \
+		echo "VECTOR_STORE_HOST=${VECTOR_STORE_HOST}" >> .env; \
 		echo "OLLAMA_BASE_URL=${OLLAMA_BASE_URL}" >> .env; \
 		echo "SETFIT_BASE_URL=${SETFIT_BASE_URL}" >> .env; \
+		echo "VECTOR_STORE_BASE_URL=${VECTOR_STORE_BASE_URL}" >> .env; \
 		echo "DOCKER_OLLAMA_BASE_URL=http://ollama:11434" >> .env; \
 		echo "DOCKER_SETFIT_BASE_URL=http://setfit:8000" >> .env; \
+		echo "DOCKER_VECTOR_STORE_BASE_URL=http://vector-store:8001" >> .env; \
 	fi
 
 # Python version check target
@@ -126,6 +133,7 @@ help:
 	@echo "  clean             - Remove all generated files and Docker resources"
 	@echo ""
 	@echo "Current configuration:"
-	@echo "  UI_PORT:      ${UI_PORT}"
-	@echo "  SETFIT_PORT:  ${SETFIT_PORT}"
-	@echo "  OLLAMA_PORT:  ${OLLAMA_PORT}"
+	@echo "  UI_PORT:          ${UI_PORT}"
+	@echo "  SETFIT_PORT:      ${SETFIT_PORT}"
+	@echo "  OLLAMA_PORT:      ${OLLAMA_PORT}"
+	@echo "  VECTOR_STORE_PORT:${VECTOR_STORE_PORT}"

@@ -22,6 +22,23 @@ services:
       - PORT=${SETFIT_PORT}
     restart: unless-stopped
 
+  vector-store:
+    build:
+      context: .
+      dockerfile: dockerfiles/dockerfile.vectorstore
+    container_name: vector-store-service
+    ports:
+      - "${VECTOR_STORE_PORT}:8001"
+    environment:
+      - HOST=${VECTOR_STORE_HOST}
+      - PORT=${VECTOR_STORE_PORT}
+      - CHROMA_DATA_PATH=/data/chroma
+      - DATA_DIR=/app/data
+    volumes:
+      - vector_store_data:/data/chroma
+      - ./data:/app/data:ro
+    restart: unless-stopped
+
   app:
     build:
       context: .
@@ -34,12 +51,16 @@ services:
       - PORT=${UI_PORT}
       - OLLAMA_HOST=${DOCKER_OLLAMA_BASE_URL}
       - SETFIT_BASE_URL=${DOCKER_SETFIT_BASE_URL}
+      - VECTOR_STORE_BASE_URL=${DOCKER_VECTOR_STORE_BASE_URL}
     depends_on:
       ollama:
         condition: service_started
       setfit:
         condition: service_started
+      vector-store:
+        condition: service_started
     restart: unless-stopped
 
 volumes:
   ollama_data:
+  vector_store_data:

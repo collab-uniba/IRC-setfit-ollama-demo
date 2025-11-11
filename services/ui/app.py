@@ -13,6 +13,7 @@ import os
 
 model_loader = ModelConfigLoader()
 SETFIT_HOST = os.getenv('SETFIT_BASE_URL', 'http://localhost:8000')
+VECTOR_STORE_HOST = os.getenv('VECTOR_STORE_BASE_URL', 'http://localhost:8001')
 
 def validate_github_url(url: str) -> Tuple[bool, str, str]:
     """Validates GitHub URL and determines if it's an issue or project URL"""
@@ -286,6 +287,140 @@ def delete_label(selected_label: str) -> Tuple[List[List[str]], gr.update, str, 
     except Exception as e:
         return get_labels_dataframe(), gr.update(choices=get_label_names(), value=None), "", f"Error: {str(e)}"
 
+def search_similar_issues(query_text: str, top_k: int, use_rerank: bool) -> str:
+    """Search for similar issues using the vector store service."""
+    if not query_text.strip():
+        return "Please enter a query to search for similar issues."
+    
+    try:
+        # Check if vector store is available
+        health_response = requests.get(f"{VECTOR_STORE_HOST}/health", timeout=2)
+        if health_response.status_code != 200:
+            return "Vector store service is not available. Please ensure the service is running."
+        
+        health_data = health_response.json()
+        if health_data.get('indexed_issues', 0) == 0:
+            return "No issues indexed in the vector store yet. Please index some issues first."
+        
+        # Perform search
+        search_payload = {
+            "query": query_text,
+            "top_k": top_k,
+            "rerank": use_rerank,
+            "rerank_top_k": min(top_k, 5)
+        }
+        
+        response = requests.post(
+            f"{VECTOR_STORE_HOST}/search",
+            json=search_payload,
+            timeout=30
+        )
+        response.raise_for_status()
+        results = response.json()
+        
+        if not results.get('results'):
+            return "No similar issues found."
+        
+        # Format output
+        output = f"Found {results['total_results']} similar issue(s):\n\n"
+        
+        for i, issue in enumerate(results['results'], 1):
+            output += f"**{i}. {issue['title']}**\n"
+            output += f"   Similarity Score: {issue['score']:.3f}\n"
+            if issue.get('labels'):
+                output += f"   Labels: {', '.join(issue['labels'])}\n"
+            output += f"   State: {issue['state']}\n"
+            if issue.get('metadata', {}).get('url'):
+                output += f"   URL: {issue['metadata']['url']}\n"
+            
+            # Show snippet of body
+            body_preview = issue.get('body', '')[:200]
+            if len(issue.get('body', '')) > 200:
+                body_preview += "..."
+            output += f"   Preview: {body_preview}\n"
+            output += f"{'-'*80}\n\n"
+        
+        return output
+        
+    except requests.exceptions.Timeout:
+        return "Search request timed out. The vector store service might be processing a large query."
+    except requests.exceptions.ConnectionError:
+        return f"Could not connect to vector store service at {VECTOR_STORE_HOST}. Please ensure the service is running."
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Error searching vector store: {str(e)}")
+        return f"Error searching for similar issues: {str(e)}"
+    except Exception as e:
+        logger.error(f"Unexpected error in search_similar_issues: {str(e)}")
+        return f"Unexpected error: {str(e)}"
+
+def get_vector_store_status() -> str:
+    """Get the status of the vector store service."""
+    try:
+        response = requests.get(f"{VECTOR_STORE_HOST}/health", timeout=5)
+        if response.status_code == 200:
+            data = response.json()
+            return f"✅ Vector Store: **Online**\n" \
+                   f"Indexed Issues: **{data.get('indexed_issues', 0)}**\n" \
+                   f"Collection: {data.get('collection', 'N/A')}\n" \
+                   f"Embedding Model: {data.get('embedding_model', 'N/A')}"
+        else:
+            return f"⚠️ Vector Store: **Service returned status {response.status_code}**"
+    except requests.exceptions.ConnectionError:
+        return f"❌ Vector Store: **Offline** (Cannot connect to {VECTOR_STORE_HOST})"
+    except requests.exceptions.Timeout:
+        return "⚠️ Vector Store: **Timeout** (Service is slow to respond)"
+    except Exception as e:
+        return f"❌ Vector Store: **Error** - {str(e)}"
+
+def suggest_labels_from_similar(query_text: str, top_k: int) -> str:
+    """Get label suggestions based on similar issues."""
+    if not query_text.strip():
+        return "Please enter text to get label suggestions."
+    
+    try:
+        # Search for similar issues
+        search_payload = {
+            "query": query_text,
+            "top_k": top_k,
+            "rerank": True,
+            "rerank_top_k": min(top_k, 5)
+        }
+        
+        response = requests.post(
+            f"{VECTOR_STORE_HOST}/search",
+            json=search_payload,
+            timeout=30
+        )
+        response.raise_for_status()
+        results = response.json()
+        
+        if not results.get('results'):
+            return "No similar issues found to suggest labels."
+        
+        # Collect labels from similar issues
+        label_counts = {}
+        for issue in results['results']:
+            for label in issue.get('labels', []):
+                label_counts[label] = label_counts.get(label, 0) + 1
+        
+        if not label_counts:
+            return "No labels found in similar issues."
+        
+        # Sort by frequency
+        sorted_labels = sorted(label_counts.items(), key=lambda x: x[1], reverse=True)
+        
+        output = f"**Suggested labels based on {len(results['results'])} similar issue(s):**\n\n"
+        for label, count in sorted_labels[:10]:  # Top 10 labels
+            output += f"• **{label}** (appears in {count} similar issue(s))\n"
+        
+        return output
+        
+    except requests.exceptions.ConnectionError:
+        return f"Could not connect to vector store service at {VECTOR_STORE_HOST}."
+    except Exception as e:
+        logger.error(f"Error getting label suggestions: {str(e)}")
+        return f"Error getting label suggestions: {str(e)}"
+
 with gr.Blocks() as iface:
     gr.Markdown("# GitHub Issue/Project Scraper and Classifier")
     
@@ -333,6 +468,69 @@ with gr.Blocks() as iface:
         
         # Status message for label operations
         label_status = gr.Textbox(label="Status", interactive=False, value="")
+    
+    # Vector Store - Similar Issues Search Section
+    with gr.Accordion("🔍 Find Similar Issues", open=False):
+        gr.Markdown("### Search for Similar Issues")
+        gr.Markdown("Use semantic search to find similar issues from the indexed database. This helps identify duplicates and discover related issues with their labels.")
+        
+        # Vector store status
+        vector_status_display = gr.Markdown(value="Checking vector store status...")
+        refresh_status_btn = gr.Button("🔄 Refresh Status", size="sm")
+        
+        # Search similar issues
+        with gr.Row():
+            with gr.Column():
+                gr.Markdown("#### Search by Text")
+                similarity_query = gr.Textbox(
+                    label="Query",
+                    placeholder="Enter issue title/description to find similar issues...",
+                    lines=3
+                )
+                with gr.Row():
+                    similarity_top_k = gr.Slider(
+                        minimum=1,
+                        maximum=20,
+                        value=5,
+                        step=1,
+                        label="Number of Results"
+                    )
+                    use_reranking = gr.Checkbox(
+                        label="Use Reranking (more accurate but slower)",
+                        value=True
+                    )
+                search_similar_btn = gr.Button("Search Similar Issues", variant="primary")
+        
+        similar_issues_output = gr.Textbox(
+            label="Similar Issues Results",
+            lines=15,
+            interactive=False
+        )
+        
+        # Label suggestions from similar issues
+        with gr.Row():
+            with gr.Column():
+                gr.Markdown("#### Get Label Suggestions")
+                gr.Markdown("Enter issue text to get label suggestions based on similar historical issues.")
+                label_suggestion_query = gr.Textbox(
+                    label="Issue Text",
+                    placeholder="Enter issue title and/or description...",
+                    lines=3
+                )
+                label_suggestion_top_k = gr.Slider(
+                    minimum=3,
+                    maximum=15,
+                    value=10,
+                    step=1,
+                    label="Consider Top N Similar Issues"
+                )
+                get_label_suggestions_btn = gr.Button("Get Label Suggestions", variant="secondary")
+        
+        label_suggestions_output = gr.Textbox(
+            label="Suggested Labels",
+            lines=8,
+            interactive=False
+        )
     
     # Input type selector
     input_type = gr.Radio(
@@ -479,6 +677,32 @@ with gr.Blocks() as iface:
         delete_label,
         inputs=[label_selector],
         outputs=[labels_table, label_selector, edit_new_name, label_status]
+    )
+    
+    # Vector store event handlers
+    refresh_status_btn.click(
+        get_vector_store_status,
+        inputs=[],
+        outputs=[vector_status_display]
+    )
+    
+    search_similar_btn.click(
+        search_similar_issues,
+        inputs=[similarity_query, similarity_top_k, use_reranking],
+        outputs=[similar_issues_output]
+    )
+    
+    get_label_suggestions_btn.click(
+        suggest_labels_from_similar,
+        inputs=[label_suggestion_query, label_suggestion_top_k],
+        outputs=[label_suggestions_output]
+    )
+    
+    # Initialize vector store status on load
+    iface.load(
+        get_vector_store_status,
+        inputs=[],
+        outputs=[vector_status_display]
     )
 
 if __name__ == "__main__":   
