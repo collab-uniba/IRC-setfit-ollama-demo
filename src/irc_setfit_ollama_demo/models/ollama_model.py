@@ -3,9 +3,9 @@ import re
 import yaml
 import os
 import json
-from label_config_manager import get_label_manager
+from irc_setfit_ollama_demo.config import get_label_manager
 
-OLLAMA_HOST = os.getenv(f'OLLAMA_HOST', '0.0.0.0:11434')
+OLLAMA_HOST = os.getenv('OLLAMA_HOST', '0.0.0.0:11434')
 
 def pull_ollama_model(base_model):
     ollama.pull(base_model)
@@ -53,7 +53,8 @@ def postprocess_response(issue_response):
 
 def llm_classify(issues, base_model='llama3.2'):
     ollama.pull(base_model)
-    prompt_template = load_prompt_template('prompt_templates/bin-template.yaml')
+    # Look for prompt template in services/ui/prompt_templates for backward compatibility
+    prompt_template = load_prompt_template('services/ui/prompt_templates/bin-template.yaml')
     responses = []
     if not isinstance(issues, list):
         issues = [issues]

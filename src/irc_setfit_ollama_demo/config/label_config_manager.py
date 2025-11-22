@@ -15,14 +15,12 @@ class LabelConfigManager:
         
         Args:
             config_path: Path to the labels_config.yaml file. 
-                        Defaults to labels_config.yaml in the same directory.
+                        Defaults to labels_config.yaml in services/ui directory.
         """
         if config_path is None:
-            # Default to labels_config.yaml in the same directory as this file
-            config_path = os.path.join(
-                os.path.dirname(os.path.abspath(__file__)),
-                'labels_config.yaml'
-            )
+            # Default to labels_config.yaml in services/ui directory
+            # This ensures backward compatibility with the existing setup
+            config_path = os.path.join('services', 'ui', 'labels_config.yaml')
         self.config_path = config_path
         self._lock = Lock()
         

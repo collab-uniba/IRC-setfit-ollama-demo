@@ -6,7 +6,10 @@ from setfit import SetFitModel
 import logging
 import yaml
 from pathlib import Path
-from common.issue import Issue
+
+# Import from the shared package
+from irc_setfit_ollama_demo.common import Issue
+from irc_setfit_ollama_demo.models.setfit_model import preprocess_issues, response_postprocess
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -17,7 +20,7 @@ loaded_model = None
 current_model_name = None
 model_configs = {}
 
-class Issue(BaseModel):
+class IssueModel(BaseModel):
     """Pydantic model for issue data"""
     title: str
     body: str
@@ -25,7 +28,7 @@ class Issue(BaseModel):
 
 class ClassificationRequest(BaseModel):
     """Pydantic model for classification request"""
-    issues: List[Issue]
+    issues: List[IssueModel]
     model_name: Optional[str] = None  # Will be set to default model if None
 
 def load_config() -> Dict:
@@ -79,19 +82,23 @@ def load_model(model_name: Optional[str] = None) -> SetFitModel:
 
     return loaded_model
 
-def preprocess_issues(issues: List[Issue]) -> List[str]:
-    """
-    Preprocesses the issues for SetFit model.
-    """
-    return [f"{issue.title}\n\n{issue.body}" for issue in issues]
+def pydantic_to_issue(pydantic_issue: IssueModel) -> Issue:
+    """Convert Pydantic model to Issue object"""
+    issue = Issue(
+        title=pydantic_issue.title,
+        body=pydantic_issue.body,
+        url=""
+    )
+    issue.classification = pydantic_issue.classification
+    return issue
 
-def response_postprocess(responses: List[str], issues: List[Issue]) -> List[Issue]:
-    """
-    Postprocesses the responses from SetFit model.
-    """
-    for r, i in zip(responses, issues):
-        i.classification = r
-    return issues
+def issue_to_pydantic(issue: Issue) -> IssueModel:
+    """Convert Issue object to Pydantic model"""
+    return IssueModel(
+        title=issue.title,
+        body=issue.body,
+        classification=issue.classification
+    )
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -120,7 +127,7 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-@app.post("/classify", response_model=List[Issue])
+@app.post("/classify", response_model=List[IssueModel])
 async def classify_issues(request: ClassificationRequest):
     """
     Classifies the provided issues using the SetFit model.
@@ -129,14 +136,19 @@ async def classify_issues(request: ClassificationRequest):
         # Load or get the appropriate model
         model = load_model(request.model_name)
 
+        # Convert Pydantic models to Issue objects
+        issues = [pydantic_to_issue(issue) for issue in request.issues]
+
         # Preprocess issues
-        processed_issues = preprocess_issues(request.issues)
+        processed_issues = preprocess_issues(issues)
 
         # Get predictions
         logger.info(f"Classifying {len(request.issues)} issues")
         responses = model.predict(processed_issues)
 
-        return response_postprocess(responses, request.issues)
+        # Post-process and convert back to Pydantic models
+        classified_issues = response_postprocess(responses, issues)
+        return [issue_to_pydantic(issue) for issue in classified_issues]
     except Exception as e:
         logger.error(f"Error during classification: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e)) from e

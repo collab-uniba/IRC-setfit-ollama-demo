@@ -16,15 +16,9 @@ def setup_logging():
 def load_model_config(config_path: str) -> dict:
     """Load model configuration from YAML file"""
     try:
-        # Look for config file in parent directory of the script
         config_file = Path(config_path)
         if not config_file.is_file():
-            # Try looking in the parent directory
-            parent_config = Path(__file__).parent.parent / config_path
-            if parent_config.is_file():
-                config_file = parent_config
-            else:
-                raise FileNotFoundError(f"Config file not found in {config_path} or parent directory")
+            raise FileNotFoundError(f"Config file not found: {config_path}")
         
         with open(config_file, 'r') as file:
             return yaml.safe_load(file)

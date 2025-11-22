@@ -1,4 +1,4 @@
-.PHONY: venv activate install-ui install-setfit install-all setup-ollama run-ui run-setfit run-all dev clean docker-build docker-run docker-compose-up docker-compose-down
+.PHONY: venv activate install install-dev install-ui install-setfit install-all setup-ollama run-ui run-setfit run-all dev clean docker-build docker-run docker-compose-up docker-compose-down
 
 # Load environment variables if .env file exists
 ifneq (,$(wildcard .env))
@@ -44,14 +44,19 @@ venv: python_version_check
 activate: venv
 	@echo "To activate the virtual environment, run: source venv/bin/activate"
 
-# Installation targets (updated paths)
-install-ui: activate
-	. venv/bin/activate && pip install -r services/ui/requirements.txt
+# Installation targets (updated to use pyproject.toml)
+install: activate
+	. venv/bin/activate && pip install -e .
 
-install-setfit: activate
-	. venv/bin/activate && pip install -r services/setfit/requirements.txt
+install-dev: install
+	. venv/bin/activate && pip install -e ".[dev]"
 
-install-all: install-ui install-setfit
+# Legacy targets for backward compatibility
+install-ui: install
+
+install-setfit: install
+
+install-all: install-dev
 
 # Ollama setup
 setup-ollama:
@@ -70,43 +75,44 @@ setup-ollama:
 		echo "Ollama is already running."; \
 	fi
 
-# Run services locally
-run-ui: install-ui setup-ollama setup-env
-	. venv/bin/activate && HOST=${UI_HOST} PORT=${UI_PORT} \
+# Run services locally (updated to use installed package)
+run-ui: install setup-ollama setup-env
+	. venv/bin/activate && cd services/ui && HOST=${UI_HOST} PORT=${UI_PORT} \
 		OLLAMA_BASE_URL=${OLLAMA_BASE_URL} \
 		SETFIT_BASE_URL=${SETFIT_BASE_URL} \
-		python -m services.ui.app
+		python -m app
 
-run-setfit: install-setfit setup-env
-	. venv/bin/activate && HOST=${SETFIT_HOST} PORT=${SETFIT_PORT} \
-		uvicorn services.setfit.setfit_api:app --host ${SETFIT_HOST} --port ${SETFIT_PORT}
+run-setfit: install setup-env
+	. venv/bin/activate && cd services/setfit_inference && HOST=${SETFIT_HOST} PORT=${SETFIT_PORT} \
+		uvicorn setfit_api:app --host ${SETFIT_HOST} --port ${SETFIT_PORT}
 
-run-all: install-all setup-ollama setup-env
+run-all: install setup-ollama setup-env
 	@echo "Starting all services..."
 	@echo "Starting SetFit service..."
-	. venv/bin/activate && HOST=${SETFIT_HOST} PORT=${SETFIT_PORT} \
-		uvicorn services.setfit.setfit_api:app --host ${SETFIT_HOST} --port ${SETFIT_PORT} & \
+	. venv/bin/activate && cd services/setfit_inference && HOST=${SETFIT_HOST} PORT=${SETFIT_PORT} \
+		uvicorn setfit_api:app --host ${SETFIT_HOST} --port ${SETFIT_PORT} & \
 	echo "Starting UI service..." && \
-	. venv/bin/activate && HOST=${UI_HOST} PORT=${UI_PORT} \
+	. venv/bin/activate && cd services/ui && HOST=${UI_HOST} PORT=${UI_PORT} \
 		OLLAMA_BASE_URL=${OLLAMA_BASE_URL} \
 		SETFIT_BASE_URL=${SETFIT_BASE_URL} \
-		python -m services.ui.app
+		python -m app
 
 # Docker commands with environment variables
 docker-compose-up: setup-env
-	docker-compose up --build -d
+	docker compose up --build -d
 
 docker-compose-down:
-	docker-compose down
+	docker compose down
 
 # Clean up
 clean:
-	docker-compose down -v
+	docker compose down -v
 	-docker rmi github-issue-classifier-ui github-issue-classifier-setfit github-issue-classifier-ollama
 	-rm -rf venv
 	-rm .env
 	find . -type d -name "__pycache__" -exec rm -r {} +
 	find . -type f -name "*.pyc" -delete
+	find . -type d -name "*.egg-info" -exec rm -r {} +
 
 # Help target
 help:
@@ -114,9 +120,11 @@ help:
 	@echo "  setup-env         - Create .env file with default values"
 	@echo "  venv              - Create Python virtual environment"
 	@echo "  activate          - Activate virtual environment (must be sourced)"
-	@echo "  install-ui        - Install UI requirements"
-	@echo "  install-setfit    - Install SetFit requirements"
-	@echo "  install-all       - Install all requirements"
+	@echo "  install           - Install the package and all dependencies"
+	@echo "  install-dev       - Install the package with dev dependencies"
+	@echo "  install-ui        - (Legacy) Same as install"
+	@echo "  install-setfit    - (Legacy) Same as install"
+	@echo "  install-all       - Install all dependencies including dev"
 	@echo "  setup-ollama      - Install and start Ollama service"
 	@echo "  run-ui            - Run UI service locally"
 	@echo "  run-setfit        - Run SetFit service locally"

@@ -8,6 +8,7 @@ __pycache__/
 ENV/
 env/
 venv/
+test_venv/
 env.bak/
 venv.bak/
 
@@ -44,6 +45,7 @@ var/
 *.egg-info/
 .installed.cfg
 *.egg
+MANIFEST
 
 # Jupyter Notebook #
 .ipynb_checkpoints
@@ -100,3 +102,7 @@ models/.setfit_model/
 *.bak
 *.orig
 *.swp
+
+# Old backup files #
+*_old.py
+*_old.md

@@ -8,14 +8,16 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Copy only requirements.txt first
-COPY services/ui/requirements.txt ./requirements.txt
+# Copy pyproject.toml for package installation
+COPY pyproject.toml ./
 
-# Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt 
+# Copy the shared package
+COPY src/irc_setfit_ollama_demo /app/src/irc_setfit_ollama_demo
 
-# Copy the UI service directory into the container
-COPY common /app/common
+# Install the package and its dependencies
+RUN pip install --no-cache-dir -e .
+
+# Copy config and service files
 COPY config /app/config
 COPY services/ui /app/
 

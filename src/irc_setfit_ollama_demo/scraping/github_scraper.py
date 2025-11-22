@@ -1,7 +1,7 @@
 from typing import List
 from github import Github
 from loguru import logger
-from common.issue import Issue
+from irc_setfit_ollama_demo.common import Issue
 
 def validate_github_url(url: str) -> bool:
     """
@@ -61,4 +61,3 @@ if __name__ == "__main__":
     issues = scrape_github_issues(url)
     for issue in issues:
         print(issue)
-    
