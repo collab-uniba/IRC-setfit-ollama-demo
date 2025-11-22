@@ -1,0 +1,51 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "irc-setfit-ollama-demo"
+version = "0.1.0"
+description = "GitHub Issue Classification System using SetFit and Ollama"
+readme = "README.md"
+requires-python = ">=3.12"
+license = {text = "MIT"}
+authors = [
+    {name = "Collab Uniba"}
+]
+keywords = ["github", "classification", "setfit", "ollama", "nlp"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+    "requests",
+    "pyGitHub",
+    "pandas",
+    "ollama",
+    "gradio",
+    "python-dotenv",
+    "loguru",
+    "pyYAML",
+    "fastapi",
+    "uvicorn",
+    "pydantic",
+    "setfit",
+    "python-multipart",
+    "python-jose",
+    "typing-extensions",
+    "huggingface-hub",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+]
+
+[tool.setuptools]
+packages = ["irc_setfit_ollama_demo"]
+package-dir = {"" = "src"}
+
+[tool.setuptools.package-data]
+irc_setfit_ollama_demo = ["py.typed"]

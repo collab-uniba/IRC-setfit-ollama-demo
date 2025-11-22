@@ -3,13 +3,14 @@ from dataclasses import dataclass
 from typing import List, Union, Tuple
 import re
 import requests
-from scraping.github_scraper import scrape_github_issues
-from common.issue import Issue
-from llm_model import llm_classify, pull_ollama_model
-from model_config import ModelConfigLoader
-from label_config_manager import get_label_manager
-from loguru import logger
 import os
+
+# Import from the shared package
+from irc_setfit_ollama_demo.scraping import scrape_github_issues
+from irc_setfit_ollama_demo.common import Issue
+from irc_setfit_ollama_demo.models import llm_classify, pull_ollama_model
+from irc_setfit_ollama_demo.config import ModelConfigLoader, get_label_manager
+from loguru import logger
 
 model_loader = ModelConfigLoader()
 SETFIT_HOST = os.getenv('SETFIT_BASE_URL', 'http://localhost:8000')
