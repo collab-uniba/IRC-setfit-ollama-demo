@@ -99,14 +99,14 @@ run-all: install setup-ollama setup-env
 
 # Docker commands with environment variables
 docker-compose-up: setup-env
-	docker-compose up --build -d
+	docker compose up --build -d
 
 docker-compose-down:
-	docker-compose down
+	docker compose down
 
 # Clean up
 clean:
-	docker-compose down -v
+	docker compose down -v
 	-docker rmi github-issue-classifier-ui github-issue-classifier-setfit github-issue-classifier-ollama
 	-rm -rf venv
 	-rm .env

@@ -110,7 +110,12 @@ IRC-setfit-ollama-demo/
    make docker-compose-up
    ```
    
-   Or directly:
+   Or directly (using Docker Compose v2):
+   ```sh
+   docker compose up --build -d
+   ```
+   
+   For Docker Compose v1 (if you have the legacy version):
    ```sh
    docker-compose up --build -d
    ```
